@@ -1,11 +1,117 @@
 "use client";
 
-import React, { useState } from "react";
-import { Input } from "@/components/ui/input";
+import React, { useState, useRef, KeyboardEvent } from "react";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+
+interface ChipInputProps {
+	id: string;
+	placeholder: string;
+	values: string[];
+	onChange: (values: string[]) => void;
+	className?: string;
+}
+
+const ChipInput: React.FC<ChipInputProps> = ({
+	id,
+	placeholder,
+	values = [],
+	onChange,
+	className,
+}) => {
+	const [inputValue, setInputValue] = useState("");
+	const inputRef = useRef<HTMLInputElement>(null);
+
+	const addValue = (value: string) => {
+		const trimmedValue = value.trim();
+		if (trimmedValue && !values.includes(trimmedValue)) {
+			onChange([...values, trimmedValue]);
+		}
+	};
+
+	const removeValue = (index: number) => {
+		const newValues = values.filter((_, i) => i !== index);
+		onChange(newValues);
+	};
+
+	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value;
+		const separators = [",", " ", "\t"];
+
+		// Check if any separator is in the value
+		const hasSeparator = separators.some((sep) => value.includes(sep));
+
+		if (hasSeparator) {
+			// Split by multiple separators and add non-empty values
+			const newValues = value
+				.split(/[,\s\t]+/)
+				.map((v) => v.trim())
+				.filter((v) => v && !values.includes(v));
+
+			if (newValues.length > 0) {
+				onChange([...values, ...newValues]);
+			}
+			setInputValue("");
+		} else {
+			setInputValue(value);
+		}
+	};
+
+	const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+		if (e.key === "Enter") {
+			e.preventDefault();
+			if (inputValue.trim()) {
+				addValue(inputValue);
+				setInputValue("");
+			}
+		} else if (e.key === "Backspace" && !inputValue && values.length > 0) {
+			removeValue(values.length - 1);
+		}
+	};
+
+	return (
+		<div
+			className={`min-h-[42px] p-2 border rounded-md bg-slate-700 border-slate-600 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 hover:border-blue-400 transition-all duration-200 ${className}`}
+			onClick={() => inputRef.current?.focus()}
+		>
+			<div className="flex flex-wrap gap-1 items-center">
+				{values.map((value, index) => (
+					<motion.div
+						key={`${value}-${index}`}
+						initial={{ opacity: 0, scale: 0.8 }}
+						animate={{ opacity: 1, scale: 1 }}
+						exit={{ opacity: 0, scale: 0.8 }}
+						className="inline-flex items-center gap-1 px-2 py-1 bg-blue-600 text-blue-100 text-xs rounded-md font-medium"
+					>
+						<span>{value}</span>
+						<button
+							type="button"
+							onClick={(e) => {
+								e.stopPropagation();
+								removeValue(index);
+							}}
+							className="text-blue-200 hover:text-white transition-colors ml-1 text-sm leading-none"
+						>
+							×
+						</button>
+					</motion.div>
+				))}
+				<input
+					ref={inputRef}
+					id={id}
+					type="text"
+					value={inputValue}
+					onChange={handleInputChange}
+					onKeyDown={handleKeyDown}
+					placeholder={values.length === 0 ? placeholder : ""}
+					className="flex-1 min-w-[120px] bg-transparent border-none outline-none text-slate-200 placeholder:text-slate-400 text-sm"
+				/>
+			</div>
+		</div>
+	);
+};
 
 interface InsightItem {
 	entity_id: string;
@@ -58,69 +164,83 @@ const getTypeEmoji = (type: string) => {
 
 const getPlaceholder = (type: string) => {
 	const placeholders: Record<string, string> = {
-		artist: "The Beatles",
-		album: "Abbey Road",
-		book: "1984",
-		movie: "Inception",
-		tv_show: "Breaking Bad",
-		destination: "Paris",
-		place: "Coffee shop",
-		brand: "Nike",
-		videogame: "The Witcher 3",
-		podcast: "Joe Rogan",
-		actor: "Leonardo DiCaprio",
-		director: "Christopher Nolan",
-		author: "George Orwell",
-		person: "Albert Einstein",
-		locality: "New York",
-		tag: "Adventure",
-		demographics: "Millennials",
+		artist: "The Beatles, Taylor Swift, Drake",
+		album: "Abbey Road, 1989, Thriller",
+		book: "1984, Harry Potter, The Hobbit",
+		movie: "Inception, The Matrix, Interstellar",
+		tv_show: "Breaking Bad, Game of Thrones, Friends",
+		destination: "Paris, Tokyo, New York",
+		place: "Coffee shop, Library, Beach",
+		brand: "Nike, Apple, Starbucks",
+		videogame: "The Witcher 3, Minecraft, Zelda",
+		podcast: "Joe Rogan, This American Life",
+		actor: "Leonardo DiCaprio, Meryl Streep",
+		director: "Christopher Nolan, Quentin Tarantino",
+		author: "George Orwell, J.K. Rowling",
+		person: "Albert Einstein, Steve Jobs",
+		locality: "New York, London, Tokyo",
+		tag: "Adventure, Comedy, Romance",
+		demographics: "Millennials, Gen Z, Baby Boomers",
 	};
-	return placeholders[type] || "Example";
+	return placeholders[type] || "Add multiple items...";
 };
 
 export default function ProfileForm() {
-	const [formData, setFormData] = useState<Record<string, string>>({});
+	const [formData, setFormData] = useState<Record<string, string[]>>({});
 	const [insightResults, setInsightResults] = useState<
 		Record<string, InsightItem[]>
 	>({});
 
-	const handleChange = (type: string, value: string) => {
-		setFormData({ ...formData, [type]: value });
+	const handleChange = (type: string, values: string[]) => {
+		setFormData({ ...formData, [type]: values });
 	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		const resolvedEntities: Record<string, InsightItem | null> = {};
+		const resolvedEntities: Record<string, InsightItem[]> = {};
 		const insightMap: Record<string, InsightItem[]> = {};
 
 		for (const type of QLOO_TYPES) {
-			const value = formData[type];
-			if (!value) continue;
+			const values = formData[type];
+			if (!values || values.length === 0) continue;
 
-			const res = await fetch("/api/qloo-search", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ query: value, type }),
-			});
+			const typeEntities: InsightItem[] = [];
+			const typeInsights: InsightItem[] = [];
 
-			const json = await res.json();
-			const entity = json.data?.results?.[0];
-			resolvedEntities[type] = entity || null;
-
-			if (entity?.entity_id) {
-				const insightRes = await fetch("/api/qloo-insights", {
+			// Process each value in the array
+			for (const value of values) {
+				const res = await fetch("/api/qloo-search", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						entityId: entity.entity_id,
-						type,
-						filterType: "brand", // Can be made dynamic later
-						take: 5,
-					}),
+					body: JSON.stringify({ query: value, type }),
 				});
-				const insights = await insightRes.json();
-				insightMap[type] = insights?.data?.results ?? [];
+
+				const json = await res.json();
+				const entity = json.data?.results?.[0];
+				if (entity) {
+					typeEntities.push(entity);
+
+					if (entity?.entity_id) {
+						const insightRes = await fetch("/api/qloo-insights", {
+							method: "POST",
+							headers: { "Content-Type": "application/json" },
+							body: JSON.stringify({
+								entityId: entity.entity_id,
+								type,
+								filterType: "brand", // Can be made dynamic later
+								take: 5,
+							}),
+						});
+						const insights = await insightRes.json();
+						const insightResults = insights?.data?.results ?? [];
+						typeInsights.push(...insightResults);
+					}
+				}
+			}
+
+			if (typeEntities.length > 0) {
+				resolvedEntities[type] = typeEntities;
+				insightMap[type] = typeInsights;
 			}
 		}
 
@@ -228,12 +348,11 @@ export default function ProfileForm() {
 												<span className="text-base">{getTypeEmoji(type)}</span>
 												{type.replace("_", " ")}
 											</Label>
-											<Input
+											<ChipInput
 												id={type}
 												placeholder={`e.g. ${getPlaceholder(type)}`}
-												value={formData[type] || ""}
-												onChange={(e) => handleChange(type, e.target.value)}
-												className="transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-blue-400 bg-slate-700 border-slate-600 text-slate-200 placeholder:text-slate-400"
+												values={formData[type] || []}
+												onChange={(values) => handleChange(type, values)}
 											/>
 										</motion.div>
 									))}
