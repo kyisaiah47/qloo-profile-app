@@ -744,6 +744,22 @@ Please respond with ONLY the username, nothing else.`;
 				setProfileSaved(true);
 				console.log("Profile saved successfully!", saveResult);
 
+				// Set logged-in state and load user profile data
+				setIsLoggedIn(true);
+				try {
+					const profileResponse = await fetch("/api/get-user-profile", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ userId: saveResult.data.userId }),
+					});
+					const profileResult = await profileResponse.json();
+					if (profileResult.success && profileResult.data) {
+						setUserProfileData(profileResult.data);
+					}
+				} catch (profileError) {
+					console.error("Error loading user profile data:", profileError);
+				}
+
 				// Generate AI profile description
 				try {
 					const aiResponse = await fetch("/api/generate-profile", {
@@ -758,22 +774,24 @@ Please respond with ONLY the username, nothing else.`;
 					const aiResult = await aiResponse.json();
 					console.log("🔍 SUBMIT - AI Result from generate-profile:", aiResult);
 					if (aiResult.success && aiResult.data && aiResult.data.headline) {
-						console.log("🔍 SUBMIT - Setting valid aiProfile:", aiResult.data);
-						// Show the AI-generated profile instead of raw insights
-						safeSetInsightResults({ aiProfile: aiResult.data }); // Using insights display for AI profile
+						console.log(
+							"🔍 SUBMIT - AI profile generated successfully:",
+							aiResult.data
+						);
+						// Navigate directly to user profile instead of showing modal
+						setShowUserProfile(true);
 					} else {
 						console.error(
 							"Failed to generate AI profile or invalid data:",
 							aiResult
 						);
-						console.log("🔍 SUBMIT - Setting insightMap fallback:", insightMap);
-						// Fallback to showing insights if AI fails
-						safeSetInsightResults(insightMap);
+						// Navigate to user profile even if AI generation fails
+						setShowUserProfile(true);
 					}
 				} catch (aiError) {
 					console.error("Error generating AI profile:", aiError);
-					// Fallback to showing insights if AI fails
-					safeSetInsightResults(insightMap);
+					// Navigate to user profile even if AI generation fails
+					setShowUserProfile(true);
 				}
 			} else {
 				console.error("Failed to save profile:", saveResult.error);
@@ -1905,7 +1923,9 @@ const UserProfileScreen = ({
 											{loadingMatches ? (
 												<>
 													<div className="animate-spin w-6 h-6 border-3 border-white border-t-transparent rounded-full mr-3"></div>
-													<span className="text-xl">Finding Your Perfect Matches...</span>
+													<span className="text-xl">
+														Finding Your Perfect Matches...
+													</span>
 												</>
 											) : (
 												<>
