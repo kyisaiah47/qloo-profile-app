@@ -33,6 +33,52 @@ const QLOO_TYPES = [
 	"demographics",
 ];
 
+const getTypeEmoji = (type: string) => {
+	const emojiMap: Record<string, string> = {
+		artist: "🎤",
+		album: "💿",
+		book: "📚",
+		movie: "🎬",
+		tv_show: "📺",
+		destination: "🌍",
+		place: "📍",
+		brand: "🏷️",
+		videogame: "🎮",
+		podcast: "🎧",
+		actor: "🎭",
+		director: "🎬",
+		author: "✍️",
+		person: "👤",
+		locality: "🏘️",
+		tag: "🏷️",
+		demographics: "👥",
+	};
+	return emojiMap[type] || "⭐";
+};
+
+const getPlaceholder = (type: string) => {
+	const placeholders: Record<string, string> = {
+		artist: "The Beatles",
+		album: "Abbey Road",
+		book: "1984",
+		movie: "Inception",
+		tv_show: "Breaking Bad",
+		destination: "Paris",
+		place: "Coffee shop",
+		brand: "Nike",
+		videogame: "The Witcher 3",
+		podcast: "Joe Rogan",
+		actor: "Leonardo DiCaprio",
+		director: "Christopher Nolan",
+		author: "George Orwell",
+		person: "Albert Einstein",
+		locality: "New York",
+		tag: "Adventure",
+		demographics: "Millennials",
+	};
+	return placeholders[type] || "Example";
+};
+
 export default function ProfileForm() {
 	const [formData, setFormData] = useState<Record<string, string>>({});
 	const [insightResults, setInsightResults] = useState<
@@ -87,140 +133,218 @@ export default function ProfileForm() {
 	};
 
 	return (
-		<div className="min-h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-			<div className="container mx-auto px-4 py-8 h-full">
+		<div className="h-screen w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+			{/* Subtle background elements */}
+			<div className="absolute inset-0 overflow-hidden">
+				<motion.div
+					animate={{
+						rotate: 360,
+						scale: [1, 1.05, 1],
+					}}
+					transition={{
+						duration: 30,
+						repeat: Infinity,
+						ease: "linear",
+					}}
+					className="absolute -top-20 -right-20 w-60 h-60 bg-gradient-to-r from-blue-500/15 to-indigo-500/15 rounded-full blur-3xl"
+				/>
+				<motion.div
+					animate={{
+						rotate: -360,
+						scale: [1, 1.08, 1],
+					}}
+					transition={{
+						duration: 35,
+						repeat: Infinity,
+						ease: "linear",
+					}}
+					className="absolute -bottom-20 -left-20 w-72 h-72 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-full blur-3xl"
+				/>
+			</div>
+
+			<div className="h-full flex flex-col relative z-10 p-6">
 				<motion.div
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ duration: 0.6 }}
-					className="max-w-7xl mx-auto"
+					className="flex-1 flex flex-col max-w-7xl mx-auto w-full"
 				>
-					<motion.h1
-						initial={{ opacity: 0, y: -20 }}
-						animate={{ opacity: 1, y: 0 }}
-						transition={{ delay: 0.2, duration: 0.6 }}
-						className="text-5xl font-bold mb-8 text-center bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent"
-					>
-						Build Your Taste Profile
-					</motion.h1>
+					{/* Compact Header */}
+					<div className="text-center mb-8">
+						<motion.h1
+							initial={{ opacity: 0, y: -20 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ delay: 0.2, duration: 0.6 }}
+							className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-slate-200 via-blue-400 to-indigo-400 bg-clip-text text-transparent"
+						>
+							Build Your Taste Profile
+						</motion.h1>
 
-					<motion.p
-						initial={{ opacity: 0 }}
-						animate={{ opacity: 1 }}
-						transition={{ delay: 0.4, duration: 0.6 }}
-						className="text-xl text-center text-muted-foreground mb-12 max-w-2xl mx-auto"
-					>
-						Discover personalized recommendations by sharing your preferences
-						across different categories
-					</motion.p>
+						<motion.p
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+							transition={{ delay: 0.4, duration: 0.6 }}
+							className="text-lg text-slate-300 max-w-2xl mx-auto"
+						>
+							Discover personalized recommendations by sharing your preferences
+							across different categories
+						</motion.p>
+					</div>
 
 					<motion.form
 						initial={{ opacity: 0, y: 20 }}
 						animate={{ opacity: 1, y: 0 }}
 						transition={{ delay: 0.6, duration: 0.6 }}
 						onSubmit={handleSubmit}
-						className="w-full mb-12"
+						className="flex-1 flex flex-col"
 					>
-						<Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm dark:bg-slate-800/80">
-							<CardContent className="p-8">
-								<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+						<Card className="shadow-xl border border-slate-700 bg-slate-800/90 backdrop-blur-sm flex-1">
+							<CardContent className="p-8 h-full flex flex-col">
+								<div className="text-center mb-8">
+									<h2 className="text-xl font-semibold text-slate-200 mb-2">
+										Share Your Preferences
+									</h2>
+									<p className="text-sm text-slate-400">
+										Fill in categories that matter to you
+									</p>
+								</div>
+
+								<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 flex-1">
 									{QLOO_TYPES.map((type, index) => (
 										<motion.div
 											key={type}
 											initial={{ opacity: 0, y: 20 }}
 											animate={{ opacity: 1, y: 0 }}
-											transition={{ delay: 0.8 + index * 0.1, duration: 0.4 }}
-											className="space-y-2"
+											transition={{
+												delay: 0.8 + index * 0.05,
+												duration: 0.4,
+											}}
+											className="space-y-3 group"
 										>
 											<Label
 												htmlFor={type}
-												className="capitalize text-sm font-semibold text-slate-700 dark:text-slate-300"
+												className="capitalize text-sm font-semibold text-slate-300 flex items-center gap-2 group-hover:text-blue-400 transition-colors"
 											>
+												<span className="text-base">{getTypeEmoji(type)}</span>
 												{type.replace("_", " ")}
 											</Label>
 											<Input
 												id={type}
-												placeholder={`Enter a ${type.replace("_", " ")}`}
+												placeholder={`e.g. ${getPlaceholder(type)}`}
 												value={formData[type] || ""}
 												onChange={(e) => handleChange(type, e.target.value)}
-												className="transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent hover:border-blue-300"
+												className="transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-blue-400 bg-slate-700 border-slate-600 text-slate-200 placeholder:text-slate-400"
 											/>
 										</motion.div>
 									))}
 								</div>
+
+								<motion.div
+									initial={{ opacity: 0 }}
+									animate={{ opacity: 1 }}
+									transition={{ delay: 1.2, duration: 0.4 }}
+									className="text-center mt-6 pt-4 border-t border-slate-700"
+								>
+									<Button
+										type="submit"
+										size="lg"
+										className="px-8 py-3 text-base font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 transition-all duration-200 shadow-lg text-white"
+									>
+										Generate Recommendations
+									</Button>
+								</motion.div>
 							</CardContent>
 						</Card>
-
-						<motion.div
-							initial={{ opacity: 0, scale: 0.95 }}
-							animate={{ opacity: 1, scale: 1 }}
-							transition={{ delay: 1.2, duration: 0.4 }}
-							className="text-center mt-8"
-						>
-							<Button
-								type="submit"
-								size="lg"
-								className="px-12 py-4 text-lg font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
-							>
-								Generate My Profile
-							</Button>
-						</motion.div>
 					</motion.form>
 
-					{/* Display insights below */}
+					{/* Display insights in overlay */}
 					{Object.keys(insightResults).length > 0 && (
 						<motion.div
-							initial={{ opacity: 0, y: 30 }}
-							animate={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.6 }}
-							className="w-full"
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+							transition={{ duration: 0.3 }}
+							className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+							onClick={() => setInsightResults({})}
 						>
-							<h2 className="text-3xl font-bold text-center mb-8 text-slate-800 dark:text-slate-200">
-								Your Personalized Recommendations
-							</h2>
-							<div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-								{Object.entries(insightResults).map(
-									([type, results], index) => (
-										<motion.div
-											key={type}
-											initial={{ opacity: 0, y: 20 }}
-											animate={{ opacity: 1, y: 0 }}
-											transition={{ delay: index * 0.1, duration: 0.4 }}
-											className="space-y-4"
-										>
-											<h3 className="text-xl font-semibold capitalize text-slate-700 dark:text-slate-300">
-												Recommended Brands for {type.replace("_", " ")}
-											</h3>
-											<div className="space-y-3">
-												{Array.isArray(results) && results.length > 0
-													? results.map((item, itemIndex) => (
-															<motion.div
+							<motion.div
+								initial={{ scale: 0.9, opacity: 0 }}
+								animate={{ scale: 1, opacity: 1 }}
+								transition={{ duration: 0.3 }}
+								className="bg-slate-800 rounded-lg shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden border border-slate-700"
+								onClick={(e) => e.stopPropagation()}
+							>
+								<div className="p-6 border-b border-slate-700 flex items-center justify-between">
+									<h2 className="text-2xl font-bold text-slate-200">
+										Your Recommendations
+									</h2>
+									<Button
+										variant="ghost"
+										size="sm"
+										onClick={() => setInsightResults({})}
+										className="text-slate-400 hover:text-slate-200"
+									>
+										✕
+									</Button>
+								</div>
+
+								<div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+										{Object.entries(insightResults).map(([type, results]) => (
+											<div
+												key={type}
+												className="space-y-3"
+											>
+												<h3 className="text-lg font-semibold capitalize text-slate-300 flex items-center gap-2">
+													{getTypeEmoji(type)}
+													{type.replace("_", " ")} Brands
+												</h3>
+												<div className="space-y-2">
+													{Array.isArray(results) && results.length > 0 ? (
+														results.slice(0, 5).map((item) => (
+															<Card
 																key={item.entity_id}
-																initial={{ opacity: 0, x: -20 }}
-																animate={{ opacity: 1, x: 0 }}
-																transition={{
-																	delay: index * 0.1 + itemIndex * 0.05,
-																	duration: 0.3,
-																}}
+																className="p-3 hover:shadow-lg transition-shadow bg-slate-700 border-slate-600"
 															>
-																<Card className="hover:shadow-lg transition-all duration-200 bg-white/90 backdrop-blur-sm dark:bg-slate-800/90 border-slate-200 dark:border-slate-700">
-																	<CardContent className="p-4">
-																		<p className="font-medium text-slate-800 dark:text-slate-200">
+																<div className="flex items-center justify-between">
+																	<div className="flex-1 min-w-0">
+																		<p className="font-medium text-sm text-slate-200 truncate">
 																			{item.name}
 																		</p>
-																		<p className="text-sm text-muted-foreground">
-																			Popularity: {item.popularity?.toFixed(2)}
+																		<p className="text-xs text-slate-400">
+																			Score: {item.popularity?.toFixed(1)}
 																		</p>
-																	</CardContent>
-																</Card>
-															</motion.div>
-													  ))
-													: null}
+																	</div>
+																	<div className="flex text-xs">
+																		{[...Array(5)].map((_, i) => (
+																			<span
+																				key={i}
+																				className={`${
+																					i <
+																					Math.floor(
+																						(item.popularity || 0) / 20
+																					)
+																						? "text-yellow-400"
+																						: "text-slate-600"
+																				}`}
+																			>
+																				★
+																			</span>
+																		))}
+																	</div>
+																</div>
+															</Card>
+														))
+													) : (
+														<p className="text-sm text-slate-500">
+															No recommendations found
+														</p>
+													)}
+												</div>
 											</div>
-										</motion.div>
-									)
-								)}
-							</div>
+										))}
+									</div>
+								</div>
+							</motion.div>
 						</motion.div>
 					)}
 				</motion.div>
