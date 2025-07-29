@@ -1084,8 +1084,9 @@ Please respond with ONLY the username, nothing else.`;
 																	setUserIdError("");
 																}}
 																size="sm"
-																className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100"
+																className="bg-gradient-to-r from-gray-600/80 to-gray-500/80 hover:from-gray-500 hover:to-gray-400 text-white border border-gray-400/30 hover:border-gray-300/50 shadow-lg hover:shadow-gray-500/25 transition-all duration-200"
 															>
+																<span className="mr-1">✕</span>
 																Cancel
 															</Button>
 														</div>
@@ -1300,9 +1301,10 @@ const WelcomeScreen = ({
 									<Button
 										onClick={onLogin}
 										size="lg"
-										className="px-10 py-4 text-lg font-semibold border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500 transition-all duration-300"
+										className="px-10 py-4 text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-2xl border border-blue-400/30 hover:border-blue-300/50 transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 hover:shadow-blue-500/25"
 									>
-										Login with User ID 🔑
+										<span className="mr-2">🔑</span>
+										Login with User ID
 									</Button>
 									<p className="text-xs text-slate-500">
 										Already have an account? Sign in with your User ID
@@ -1411,8 +1413,9 @@ const LoginScreen = ({
 
 									<Button
 										onClick={onBack}
-										className="w-full h-12 text-lg border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500 transition-all"
+										className="w-full h-12 text-lg bg-gradient-to-r from-slate-600/80 to-slate-500/80 hover:from-slate-500 hover:to-slate-400 text-white border border-slate-400/30 hover:border-slate-300/50 shadow-lg hover:shadow-slate-500/25 transition-all duration-200"
 									>
+										<span className="mr-2">←</span>
 										Back to Home
 									</Button>
 								</div>
