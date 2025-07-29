@@ -1757,9 +1757,11 @@ const UserProfileScreen = ({
 							</div>
 							<div className="text-left">
 								<h1 className="text-3xl font-bold text-slate-200">
-									Your Profile
+									{userProfileData?.profile?.name || userId}
 								</h1>
-								<p className="text-slate-400">ID: {userId}</p>
+								<p className="text-slate-400">
+									{tasteProfile?.headline || "Building your taste profile..."}
+								</p>
 							</div>
 						</div>
 						<Button
