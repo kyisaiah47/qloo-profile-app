@@ -30,6 +30,7 @@ export interface UserProfile {
 	taste_profile_traits?: string[];
 	taste_profile_compatibility?: string;
 	taste_profile_generated_at?: string;
+	emoji?: string;
 }
 
 export interface UserInterest {

@@ -63,7 +63,8 @@ Please generate a response in the following JSON format:
   "description": "A 2-3 sentence engaging description of their personality based on their tastes",
   "vibe": "One word that best describes their overall aesthetic/personality (e.g., 'Sophisticated', 'Adventurous', 'Nostalgic', 'Eclectic')",
   "traits": ["3-5 personality traits as short phrases based on their interests"],
-  "compatibility": "A sentence about what kind of people they'd vibe with"
+  "compatibility": "A sentence about what kind of people they'd vibe with",
+  "emoji": "A single emoji that best represents their personality and interests (e.g., 🎨 for creative types, 🌟 for adventurous spirits, 📚 for bookworms, 🎵 for music lovers, etc.)"
 }
 
 Make it feel authentic and avoid generic descriptions. Focus on the unique combination of their interests to create something memorable and personal.`;
@@ -109,6 +110,7 @@ Make it feel authentic and avoid generic descriptions. Focus on the unique combi
 					traits: ["Curious", "Open-minded", "Adventurous", "Creative"],
 					compatibility:
 						"You'd connect well with fellow explorers who appreciate diversity in culture, art, and experiences.",
+					emoji: "🌟",
 				};
 			}
 		}
@@ -133,6 +135,7 @@ Make it feel authentic and avoid generic descriptions. Focus on the unique combi
 				traits: ["Genuine", "Interesting", "Thoughtful", "Creative"],
 				compatibility:
 					"You'd connect well with people who appreciate authenticity and diverse interests.",
+				emoji: "✨",
 			},
 		});
 	}

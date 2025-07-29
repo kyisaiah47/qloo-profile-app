@@ -139,6 +139,7 @@ interface AIProfile {
 	vibe: string;
 	traits: string[];
 	compatibility: string;
+	emoji?: string;
 }
 
 interface MatchUser {
@@ -147,6 +148,7 @@ interface MatchUser {
 	location: string;
 	bio: string;
 	ai_profile?: AIProfile;
+	emoji?: string;
 }
 
 interface Match {
@@ -1558,6 +1560,7 @@ interface UserProfileData {
 		location?: string;
 		bio?: string;
 		ai_profile?: string;
+		emoji?: string;
 	};
 	interests: Record<string, string[]>;
 	insights: InsightItem[];
@@ -1727,7 +1730,7 @@ const UserProfileScreen = ({
 					<div className="flex items-center justify-between mb-6">
 						<div className="flex items-center gap-3">
 							<div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-2xl">
-								👤
+								{userProfileData?.profile?.emoji || "👤"}
 							</div>
 							<div className="text-left">
 								<h1 className="text-3xl font-bold text-slate-200">
@@ -1779,7 +1782,7 @@ const UserProfileScreen = ({
 															<div className="flex items-center justify-between mb-4">
 																<div className="flex items-center gap-3">
 																	<div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-lg">
-																		👤
+																		{match.user.emoji || "👤"}
 																	</div>
 																	<div>
 																		<h3 className="font-semibold text-slate-200">
@@ -2628,30 +2631,36 @@ const ProfileFormScreen = ({
 												>
 													<CardContent className="p-6">
 														<div className="flex items-start justify-between mb-4">
-															<div>
-																<h3 className="text-lg font-semibold text-slate-200 mb-1">
-																	{match.user.name}
-																</h3>
-																<p className="text-sm text-slate-400 mb-2">
-																	{match.user.location}
-																</p>
-																<div className="flex items-center gap-2">
-																	<div className="text-sm font-medium text-blue-400">
-																		{(match.matchScore * 100).toFixed(0)}% match
-																	</div>
-																	<div className="flex text-yellow-400">
-																		{[...Array(5)].map((_, i) => (
-																			<span
-																				key={i}
-																				className={
-																					i < Math.floor(match.matchScore * 5)
-																						? "text-yellow-400"
-																						: "text-slate-600"
-																				}
-																			>
-																				★
-																			</span>
-																		))}
+															<div className="flex items-start gap-3">
+																<div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-lg flex-shrink-0">
+																	{match.user.emoji || "👤"}
+																</div>
+																<div>
+																	<h3 className="text-lg font-semibold text-slate-200 mb-1">
+																		{match.user.name}
+																	</h3>
+																	<p className="text-sm text-slate-400 mb-2">
+																		{match.user.location}
+																	</p>
+																	<div className="flex items-center gap-2">
+																		<div className="text-sm font-medium text-blue-400">
+																			{(match.matchScore * 100).toFixed(0)}%
+																			match
+																		</div>
+																		<div className="flex text-yellow-400">
+																			{[...Array(5)].map((_, i) => (
+																				<span
+																					key={i}
+																					className={
+																						i < Math.floor(match.matchScore * 5)
+																							? "text-yellow-400"
+																							: "text-slate-600"
+																					}
+																				>
+																					★
+																				</span>
+																			))}
+																		</div>
 																	</div>
 																</div>
 															</div>

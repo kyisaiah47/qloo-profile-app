@@ -392,6 +392,7 @@ export const saveTasteProfile = async (
 		vibe: string;
 		traits: string[];
 		compatibility: string;
+		emoji?: string;
 	}
 ) => {
 	try {
@@ -404,6 +405,7 @@ export const saveTasteProfile = async (
 				taste_profile_traits: tasteProfile.traits,
 				taste_profile_compatibility: tasteProfile.compatibility,
 				taste_profile_generated_at: new Date().toISOString(),
+				emoji: tasteProfile.emoji,
 			})
 			.eq("user_id", userId)
 			.select()
@@ -430,7 +432,8 @@ export const getTasteProfile = async (userId: string) => {
 				taste_profile_vibe,
 				taste_profile_traits,
 				taste_profile_compatibility,
-				taste_profile_generated_at
+				taste_profile_generated_at,
+				emoji
 			`
 			)
 			.eq("user_id", userId)
@@ -451,6 +454,7 @@ export const getTasteProfile = async (userId: string) => {
 				traits: data.taste_profile_traits || [],
 				compatibility: data.taste_profile_compatibility,
 				generated_at: data.taste_profile_generated_at,
+				emoji: data.emoji,
 			},
 		};
 	} catch (error) {
