@@ -35,9 +35,9 @@ const QLOO_TYPES = [
 
 export default function ProfileForm() {
 	const [formData, setFormData] = useState<Record<string, string>>({});
-	const [insightResults, setInsightResults] = useState<Record<string, InsightItem[]>>(
-		{}
-	);
+	const [insightResults, setInsightResults] = useState<
+		Record<string, InsightItem[]>
+	>({});
 
 	const handleChange = (type: string, value: string) => {
 		setFormData({ ...formData, [type]: value });
@@ -110,7 +110,8 @@ export default function ProfileForm() {
 						transition={{ delay: 0.4, duration: 0.6 }}
 						className="text-xl text-center text-muted-foreground mb-12 max-w-2xl mx-auto"
 					>
-						Discover personalized recommendations by sharing your preferences across different categories
+						Discover personalized recommendations by sharing your preferences
+						across different categories
 					</motion.p>
 
 					<motion.form
@@ -178,62 +179,47 @@ export default function ProfileForm() {
 								Your Personalized Recommendations
 							</h2>
 							<div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-								{Object.entries(insightResults).map(([type, results], index) => (
-									<motion.div
-										key={type}
-										initial={{ opacity: 0, y: 20 }}
-										animate={{ opacity: 1, y: 0 }}
-										transition={{ delay: index * 0.1, duration: 0.4 }}
-										className="space-y-4"
-									>
-										<h3 className="text-xl font-semibold capitalize text-slate-700 dark:text-slate-300">
-											Recommended Brands for {type.replace("_", " ")}
-										</h3>
-										<div className="space-y-3">
-											{Array.isArray(results) && results.length > 0 ? (
-												results.map((item, itemIndex) => (
-													<motion.div
-														key={item.entity_id}
-														initial={{ opacity: 0, x: -20 }}
-														animate={{ opacity: 1, x: 0 }}
-														transition={{ delay: index * 0.1 + itemIndex * 0.05, duration: 0.3 }}
-													>
-														<Card className="hover:shadow-lg transition-all duration-200 bg-white/90 backdrop-blur-sm dark:bg-slate-800/90 border-slate-200 dark:border-slate-700">
-															<CardContent className="p-4">
-																<p className="font-medium text-slate-800 dark:text-slate-200">
-																	{item.name}
-																</p>
-																<p className="text-sm text-muted-foreground">
-																	Popularity: {item.popularity?.toFixed(2)}
-																</p>
-															</CardContent>
-														</Card>
-													</motion.div>
-												))
-											) : (
-												Object.values(results)[0]?.map((item: any, itemIndex: number) => (
-													<motion.div
-														key={item.entity_id}
-														initial={{ opacity: 0, x: -20 }}
-														animate={{ opacity: 1, x: 0 }}
-														transition={{ delay: index * 0.1 + itemIndex * 0.05, duration: 0.3 }}
-													>
-														<Card className="hover:shadow-lg transition-all duration-200 bg-white/90 backdrop-blur-sm dark:bg-slate-800/90 border-slate-200 dark:border-slate-700">
-															<CardContent className="p-4">
-																<p className="font-medium text-slate-800 dark:text-slate-200">
-																	{item.name}
-																</p>
-																<p className="text-sm text-muted-foreground">
-																	Popularity: {item.popularity?.toFixed(2)}
-																</p>
-															</CardContent>
-														</Card>
-													</motion.div>
-												))
-											)}
-										</div>
-									</motion.div>
-								))}
+								{Object.entries(insightResults).map(
+									([type, results], index) => (
+										<motion.div
+											key={type}
+											initial={{ opacity: 0, y: 20 }}
+											animate={{ opacity: 1, y: 0 }}
+											transition={{ delay: index * 0.1, duration: 0.4 }}
+											className="space-y-4"
+										>
+											<h3 className="text-xl font-semibold capitalize text-slate-700 dark:text-slate-300">
+												Recommended Brands for {type.replace("_", " ")}
+											</h3>
+											<div className="space-y-3">
+												{Array.isArray(results) && results.length > 0
+													? results.map((item, itemIndex) => (
+															<motion.div
+																key={item.entity_id}
+																initial={{ opacity: 0, x: -20 }}
+																animate={{ opacity: 1, x: 0 }}
+																transition={{
+																	delay: index * 0.1 + itemIndex * 0.05,
+																	duration: 0.3,
+																}}
+															>
+																<Card className="hover:shadow-lg transition-all duration-200 bg-white/90 backdrop-blur-sm dark:bg-slate-800/90 border-slate-200 dark:border-slate-700">
+																	<CardContent className="p-4">
+																		<p className="font-medium text-slate-800 dark:text-slate-200">
+																			{item.name}
+																		</p>
+																		<p className="text-sm text-muted-foreground">
+																			Popularity: {item.popularity?.toFixed(2)}
+																		</p>
+																	</CardContent>
+																</Card>
+															</motion.div>
+													  ))
+													: null}
+											</div>
+										</motion.div>
+									)
+								)}
 							</div>
 						</motion.div>
 					)}
