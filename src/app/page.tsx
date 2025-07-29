@@ -926,7 +926,7 @@ Please respond with ONLY the username, nothing else.`;
 									<span className="text-lg">⚙️</span>
 								</div>
 								<div>
-									<h1 className="text-xl font-bold text-slate-200">
+									<h1 className="text-xl font-bold text-slate-200 font-heading">
 										Profile Settings
 									</h1>
 									<p className="text-xs text-slate-400">
@@ -960,7 +960,7 @@ Please respond with ONLY the username, nothing else.`;
 										<div className="w-6 h-6 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
 											<span className="text-xs">👤</span>
 										</div>
-										<h2 className="text-lg font-semibold text-slate-200">
+										<h2 className="text-lg font-semibold text-slate-200 font-heading">
 											Personal Information
 										</h2>
 									</div>
@@ -968,7 +968,7 @@ Please respond with ONLY the username, nothing else.`;
 									<div className="grid md:grid-cols-2 gap-6">
 										{/* User ID Section */}
 										<div className="space-y-3">
-											<h3 className="text-base font-medium text-slate-200">
+											<h3 className="text-base font-medium text-slate-200 font-heading">
 												User ID
 											</h3>
 											{editingUserId ? (
@@ -1033,7 +1033,7 @@ Please respond with ONLY the username, nothing else.`;
 
 										{/* Personal Blurb Section */}
 										<div className="space-y-3">
-											<h3 className="text-base font-medium text-slate-200">
+											<h3 className="text-base font-medium text-slate-200 font-heading">
 												Personal Blurb
 											</h3>
 											<div className="space-y-3">
@@ -1156,13 +1156,13 @@ const WelcomeScreen = ({
 					transition={{ delay: 0.2, duration: 0.6 }}
 					className="text-center mb-12"
 				>
-					<h1 className="text-6xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-						Vibe
+					<h1 className="text-6xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent font-heading">
+						KindredAI
 					</h1>
-					<p className="text-xl md:text-2xl text-slate-300 mb-4 font-light">
-						Find your tribe through shared interests
+					<p className="text-xl md:text-2xl text-slate-300 mb-4 font-light font-sans">
+						AI that finds your kind
 					</p>
-					<p className="text-lg text-slate-400 max-w-2xl mx-auto">
+					<p className="text-lg text-slate-400 max-w-2xl mx-auto font-sans">
 						Connect with like-minded people who share your passions, discover
 						new communities, and build meaningful friendships.
 					</p>
@@ -1604,7 +1604,7 @@ const UserProfileScreen = ({
 									/* Matches View */
 									<>
 										<div className="flex items-center justify-between mb-6">
-											<h2 className="text-2xl font-bold text-slate-200">
+											<h2 className="text-2xl font-bold text-slate-200 font-heading">
 												Your Matches 🤝
 											</h2>
 											<div className="text-slate-400 text-sm">
@@ -1647,7 +1647,7 @@ const UserProfileScreen = ({
 															{match.sharedFields &&
 																match.sharedFields.length > 0 && (
 																	<div className="space-y-2">
-																		<h4 className="text-sm font-medium text-slate-300">
+																		<h4 className="text-sm font-medium text-slate-300 font-heading">
 																			Shared Interests
 																		</h4>
 																		<div className="flex flex-wrap gap-2">
@@ -1678,7 +1678,7 @@ const UserProfileScreen = ({
 												<div className="flex-1 flex items-center justify-center">
 													<div className="text-center">
 														<div className="text-6xl mb-4">🔍</div>
-														<h3 className="text-xl font-semibold text-slate-200 mb-2">
+														<h3 className="text-xl font-semibold text-slate-200 mb-2 font-heading">
 															No matches found
 														</h3>
 														<p className="text-slate-400">
@@ -1696,7 +1696,7 @@ const UserProfileScreen = ({
 										<div className="space-y-6 flex-1 flex flex-col min-h-0 mb-6">
 											{userProfileData?.profile?.ai_profile && (
 												<div className="p-6 rounded-lg border border-slate-600/50">
-													<h3 className="text-xl font-semibold text-slate-200 mb-3">
+													<h3 className="text-xl font-semibold text-slate-200 mb-3 font-heading">
 														Your Vibe
 													</h3>
 													<p className="text-slate-300 leading-relaxed">
@@ -1715,7 +1715,7 @@ const UserProfileScreen = ({
 														<div className="w-6 h-6 bg-gradient-to-r from-pink-500 to-orange-500 rounded-full flex items-center justify-center">
 															<span className="text-xs">✨</span>
 														</div>
-														<h3 className="text-xl font-semibold text-slate-200">
+														<h3 className="text-xl font-semibold text-slate-200 font-heading">
 															Your Taste Profile
 														</h3>
 														{loadingTasteProfile && (
@@ -1971,8 +1971,8 @@ const ProfileFormScreen = ({
 					<Card className="shadow-xl border border-slate-700 bg-slate-800/90 backdrop-blur-sm flex-1 flex flex-col min-h-0">
 						<CardContent className="p-8 flex-1 flex flex-col min-h-0">
 							<div className="text-center mb-6 flex-shrink-0">
-								<h2 className="text-2xl font-semibold text-slate-200 mb-2">
-									Build Your Taste Profile
+								<h2 className="text-2xl font-semibold text-slate-200 mb-2 font-heading">
+									Build Your KindredAI Profile
 								</h2>
 								<p className="text-sm text-slate-400">
 									Share your interests so we can find your perfect connections

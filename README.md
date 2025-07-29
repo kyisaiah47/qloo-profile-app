@@ -1,6 +1,6 @@
-# Vibe - Social Connection App
+# KindredAI - AI that finds your kind
 
-A Next.js social discovery app that helps people find meaningful connections through shared interests. Users create taste profiles using various categories (music, movies, books, etc.) and get matched with like-minded individuals.
+A Next.js social discovery app that helps people find meaningful connections through shared interests. Users create taste profiles using various categories (music, movies, books, etc.) and get matched with like-minded individuals powered by AI.
 
 ## ✨ Features
 
