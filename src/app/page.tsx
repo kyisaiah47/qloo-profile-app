@@ -1728,6 +1728,39 @@ const UserProfileScreen = ({
 				const saveResult = await saveResponse.json();
 				if (!saveResult.success) {
 					console.error("Failed to save taste profile:", saveResult.error);
+				} else {
+					// Update user profile emoji to match taste profile
+					if (aiResult.data.emoji && userProfileData) {
+						const updatedUserProfile = {
+							...userProfileData,
+							profile: {
+								...userProfileData.profile,
+								emoji: aiResult.data.emoji,
+							},
+						};
+						setUserProfileData(updatedUserProfile);
+
+						// Save updated emoji to user profile
+						const updateProfileResponse = await fetch(
+							"/api/update-user-profile",
+							{
+								method: "POST",
+								headers: { "Content-Type": "application/json" },
+								body: JSON.stringify({
+									userId,
+									profileData: { emoji: aiResult.data.emoji },
+								}),
+							}
+						);
+
+						const updateResult = await updateProfileResponse.json();
+						if (!updateResult.success) {
+							console.error(
+								"Failed to update user profile emoji:",
+								updateResult.error
+							);
+						}
+					}
 				}
 			}
 		} catch (error) {
@@ -1735,7 +1768,7 @@ const UserProfileScreen = ({
 		} finally {
 			setLoadingTasteProfile(false);
 		}
-	}, [userProfileData?.profile?.interests, userId]);
+	}, [userProfileData, userId]);
 	return (
 		<div className="h-screen flex flex-col relative z-10 p-6">
 			<motion.div
@@ -1754,7 +1787,7 @@ const UserProfileScreen = ({
 					<div className="flex items-center justify-between mb-6">
 						<div className="flex items-center gap-3">
 							<div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-2xl">
-								{userProfileData?.profile?.emoji || "👤"}
+								{tasteProfile?.emoji || userProfileData?.profile?.emoji || "👤"}
 							</div>
 							<div className="text-left">
 								<h1 className="text-3xl font-bold text-slate-200">
