@@ -717,10 +717,10 @@ export default function ProfileForm() {
 					animate={{ opacity: 1, x: 0 }}
 					exit={{ opacity: 0, x: "100%" }}
 					transition={{ duration: 0.3, ease: "easeInOut" }}
-					className="fixed inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 z-50"
+					className="fixed inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 z-50 flex flex-col"
 				>
 					{/* Header */}
-					<div className="bg-slate-800/95 backdrop-blur-sm border-b border-slate-700 p-6">
+					<div className="bg-slate-800/95 backdrop-blur-sm border-b border-slate-700 p-6 flex-shrink-0">
 						<div className="max-w-6xl mx-auto flex items-center justify-between">
 							<div className="flex items-center gap-3">
 								<div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
@@ -753,8 +753,8 @@ export default function ProfileForm() {
 					</div>
 
 					{/* Content */}
-					<div className="flex-1 overflow-y-auto p-6">
-						<div className="max-w-6xl mx-auto space-y-8">
+					<div className="flex-1 overflow-y-auto p-6 min-h-0">
+						<div className="max-w-6xl mx-auto space-y-8 pb-8">
 							{/* Personal Info Section */}
 							<Card className="bg-slate-800/50 border-slate-700">
 								<CardContent className="p-8">
@@ -802,7 +802,7 @@ export default function ProfileForm() {
 														<Button
 															onClick={handleUserIdUpdate}
 															size="sm"
-															className="bg-blue-600 hover:bg-blue-500"
+															className="bg-blue-600 hover:bg-blue-500 text-white"
 														>
 															Save Changes
 														</Button>
@@ -814,7 +814,7 @@ export default function ProfileForm() {
 															}}
 															variant="outline"
 															size="sm"
-															className="border-slate-600 text-slate-300 hover:bg-slate-700"
+															className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100"
 														>
 															Cancel
 														</Button>
@@ -926,7 +926,7 @@ export default function ProfileForm() {
 										<Button
 											onClick={handleUpdateProfile}
 											disabled={isLoading}
-											className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500"
+											className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white"
 										>
 											{isLoading ? (
 												<>
