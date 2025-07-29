@@ -121,6 +121,9 @@ interface InsightItem {
 	entity_id: string;
 	name: string;
 	popularity?: number;
+	query?: {
+		affinity?: number;
+	};
 }
 
 const QLOO_TYPES = [
@@ -248,7 +251,7 @@ export default function ProfileForm() {
 								`Qloo insights response for ${entity.entity_id}:`,
 								insights
 							);
-							const insightResults = insights?.data?.results ?? [];
+							const insightResults = insights?.data?.results?.entities ?? [];
 							// Ensure insightResults is an array before spreading
 							if (Array.isArray(insightResults)) {
 								typeInsights.push(...insightResults);
@@ -671,25 +674,34 @@ const ProfileFormScreen = ({
 																				{item.name}
 																			</p>
 																			<p className="text-xs text-slate-400">
-																				Score: {item.popularity?.toFixed(1)}
+																				Score:{" "}
+																				{(
+																					item.popularity ||
+																					item.query?.affinity ||
+																					0
+																				).toFixed(1)}
 																			</p>
 																		</div>
 																		<div className="flex text-xs">
-																			{[...Array(5)].map((_, i) => (
-																				<span
-																					key={i}
-																					className={`${
-																						i <
-																						Math.floor(
-																							(item.popularity || 0) / 20
-																						)
-																							? "text-yellow-400"
-																							: "text-slate-600"
-																					}`}
-																				>
-																					★
-																				</span>
-																			))}
+																			{[...Array(5)].map((_, i) => {
+																				const score =
+																					item.popularity ||
+																					(item.query?.affinity
+																						? item.query.affinity * 100
+																						: 0);
+																				return (
+																					<span
+																						key={i}
+																						className={`${
+																							i < Math.floor(score / 20)
+																								? "text-yellow-400"
+																								: "text-slate-600"
+																						}`}
+																					>
+																						★
+																					</span>
+																				);
+																			})}
 																		</div>
 																	</div>
 																</Card>

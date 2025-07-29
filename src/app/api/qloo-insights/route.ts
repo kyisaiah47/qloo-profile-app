@@ -16,8 +16,13 @@ export async function POST(req: NextRequest) {
 			},
 		});
 		const data = await res.json();
+		console.log(
+			`Qloo insights API response for ${entityId}:`,
+			JSON.stringify(data, null, 2)
+		);
 		return NextResponse.json({ data });
 	} catch (err) {
+		console.error("Qloo insights API error:", err);
 		return NextResponse.json({ error: err }, { status: 500 });
 	}
 }
