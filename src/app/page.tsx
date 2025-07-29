@@ -1901,7 +1901,7 @@ const UserProfileScreen = ({
 																					(interest: string, idx: number) => (
 																						<span
 																							key={idx}
-																							className="px-2 py-1 bg-blue-600/20 text-blue-300 rounded-full text-xs border border-blue-500/30"
+																							className="px-2 py-1 bg-purple-600/20 text-purple-300 rounded-full text-xs border border-purple-500/30"
 																						>
 																							{interest}
 																						</span>
@@ -2665,7 +2665,7 @@ const ProfileFormScreen = ({
 															(trait: string, index: number) => (
 																<span
 																	key={index}
-																	className="px-3 py-1 bg-blue-600/20 text-blue-300 rounded-full text-sm font-medium border border-blue-500/30"
+																	className="px-3 py-1 bg-pink-600/20 text-pink-300 rounded-full text-sm font-medium border border-pink-500/30"
 																>
 																	{trait}
 																</span>
