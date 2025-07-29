@@ -243,7 +243,6 @@ export default function ProfileForm() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [profileSaved, setProfileSaved] = useState(false);
 	const [matches, setMatches] = useState<Match[]>([]);
-	const [showMatches, setShowMatches] = useState(false);
 	const [loadingMatches, setLoadingMatches] = useState(false);
 	const [showProfile, setShowProfile] = useState(false);
 	const [editingUserId, setEditingUserId] = useState(false);
@@ -421,7 +420,6 @@ export default function ProfileForm() {
 			);
 
 			setMatches(matchesWithBlurbs);
-			setShowMatches(true);
 			safeSetInsightResults({}); // Close the AI profile display
 		} catch (error) {
 			console.error("Error finding matches:", error);
@@ -1072,10 +1070,6 @@ Please respond with ONLY the username, nothing else.`;
 					userId={userId}
 					findMatches={findMatches}
 					loadingMatches={loadingMatches}
-					matches={matches}
-					showMatches={showMatches}
-					setShowMatches={setShowMatches}
-					setShowProfile={setShowProfile}
 					connectionUserId={connectionUserId}
 					setConnectionUserId={setConnectionUserId}
 					connectionUserIdError={connectionUserIdError}
@@ -2086,10 +2080,6 @@ interface ProfileFormScreenProps {
 	userId: string;
 	findMatches: () => Promise<void>;
 	loadingMatches: boolean;
-	matches: Match[];
-	showMatches: boolean;
-	setShowMatches: (show: boolean) => void;
-	setShowProfile: (show: boolean) => void;
 	connectionUserId: string;
 	setConnectionUserId: (value: string) => void;
 	connectionUserIdError: string;
@@ -2118,10 +2108,6 @@ const ProfileFormScreen = ({
 	userId,
 	findMatches,
 	loadingMatches,
-	matches,
-	showMatches,
-	setShowMatches,
-	setShowProfile,
 	connectionUserId,
 	setConnectionUserId,
 	connectionUserIdError,
@@ -2559,200 +2545,6 @@ const ProfileFormScreen = ({
 										<div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
 										<p className="text-slate-400">
 											Generating your unique profile...
-										</p>
-									</div>
-								)}
-							</div>
-						</motion.div>
-					</motion.div>
-				)}
-
-				{/* Display Matches in overlay */}
-				{showMatches && (
-					<motion.div
-						initial={{ opacity: 0 }}
-						animate={{ opacity: 1 }}
-						transition={{ duration: 0.3 }}
-						className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-						onClick={() => setShowMatches(false)}
-					>
-						<motion.div
-							initial={{ scale: 0.9, opacity: 0 }}
-							animate={{ scale: 1, opacity: 1 }}
-							transition={{ duration: 0.3 }}
-							className="bg-slate-800 rounded-lg shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden border border-slate-700"
-							onClick={(e) => e.stopPropagation()}
-						>
-							<div className="p-6 border-b border-slate-700 flex items-center justify-between">
-								<h2 className="text-2xl font-bold text-slate-200">
-									Your Taste Tribe ✨
-								</h2>
-								<div className="flex items-center gap-3">
-									<Button
-										size="sm"
-										onClick={() => {
-											setShowMatches(false);
-											setShowProfile(true);
-										}}
-										className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white"
-									>
-										<span className="mr-1">⚙️</span>
-										Go to Profile
-									</Button>
-									<Button
-										variant="ghost"
-										size="sm"
-										onClick={() => setShowMatches(false)}
-										className="text-slate-400 hover:text-slate-200"
-									>
-										✕
-									</Button>
-								</div>
-							</div>
-
-							<div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-								{matches.length > 0 ? (
-									<div className="space-y-6">
-										<div className="text-center mb-6">
-											<p className="text-slate-300">
-												Found{" "}
-												<span className="font-bold text-blue-400">
-													{matches.length}
-												</span>{" "}
-												people who share your vibe
-											</p>
-										</div>
-
-										<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-											{matches.map((match) => (
-												<Card
-													key={match.user.user_id}
-													className="bg-slate-700 border-slate-600 hover:border-slate-500 transition-colors"
-												>
-													<CardContent className="p-6">
-														<div className="flex items-start justify-between mb-4">
-															<div className="flex items-start gap-3">
-																<div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-lg flex-shrink-0">
-																	{match.user.emoji || "👤"}
-																</div>
-																<div>
-																	<h3 className="text-lg font-semibold text-slate-200 mb-1">
-																		{match.user.name}
-																	</h3>
-																	<p className="text-sm text-slate-400 mb-2">
-																		{match.user.location}
-																	</p>
-																	<div className="flex items-center gap-2">
-																		<div className="text-sm font-medium text-blue-400">
-																			{(match.matchScore * 100).toFixed(0)}%
-																			match
-																		</div>
-																		<div className="flex text-yellow-400">
-																			{[...Array(5)].map((_, i) => (
-																				<span
-																					key={i}
-																					className={
-																						i < Math.floor(match.matchScore * 5)
-																							? "text-yellow-400"
-																							: "text-slate-600"
-																					}
-																				>
-																					★
-																				</span>
-																			))}
-																		</div>
-																	</div>
-																</div>
-															</div>
-														</div>
-
-														<p className="text-sm text-slate-300 mb-4 line-clamp-2">
-															{match.user.bio}
-														</p>
-
-														{/* AI-generated compatibility blurb */}
-														{match.compatibilityBlurb && (
-															<div className="mb-4 p-3 bg-gradient-to-r from-blue-600/10 to-purple-600/10 border border-blue-500/20 rounded-lg">
-																<div className="flex items-start gap-2">
-																	<span className="text-blue-400 text-sm">
-																		🤝
-																	</span>
-																	<div>
-																		<h5 className="text-xs font-medium text-blue-300 mb-1">
-																			Why you&apos;d connect:
-																		</h5>
-																		<p className="text-sm text-slate-200 leading-relaxed">
-																			{match.compatibilityBlurb}
-																		</p>
-																	</div>
-																</div>
-															</div>
-														)}
-
-														{/* Shared interests */}
-														<div className="space-y-3">
-															<h4 className="text-sm font-medium text-slate-300">
-																Shared Vibes:
-															</h4>
-															<div className="flex flex-wrap gap-2">
-																{match.sharedFields.slice(0, 4).map((field) => (
-																	<span
-																		key={field}
-																		className="px-2 py-1 bg-blue-600/20 text-blue-300 rounded-full text-xs font-medium border border-blue-500/30"
-																	>
-																		{field.replace("_", " ")}
-																	</span>
-																))}
-																{match.sharedFields.length > 4 && (
-																	<span className="px-2 py-1 bg-slate-600 text-slate-300 rounded-full text-xs">
-																		+{match.sharedFields.length - 4} more
-																	</span>
-																)}
-															</div>
-
-															{/* Sample shared entities */}
-															{Object.entries(match.sharedEntities)
-																.slice(0, 2)
-																.map(([type, entities]) => (
-																	<div
-																		key={type}
-																		className="text-xs"
-																	>
-																		<span className="text-slate-400 capitalize">
-																			{type}:
-																		</span>
-																		<span className="text-slate-300 ml-1">
-																			{entities.slice(0, 3).join(", ")}
-																			{entities.length > 3 &&
-																				` +${entities.length - 3} more`}
-																		</span>
-																	</div>
-																))}
-														</div>
-
-														{/* Connect button */}
-														<div className="mt-4">
-															<Button
-																size="sm"
-																className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white"
-															>
-																Connect 💫
-															</Button>
-														</div>
-													</CardContent>
-												</Card>
-											))}
-										</div>
-									</div>
-								) : (
-									<div className="text-center py-12">
-										<div className="text-6xl mb-4">🔍</div>
-										<h3 className="text-xl font-semibold text-slate-200 mb-2">
-											No matches found yet
-										</h3>
-										<p className="text-slate-400 max-w-md mx-auto">
-											Be one of the first! More users are joining every day, and
-											we&apos;ll notify you when we find your tribe.
 										</p>
 									</div>
 								)}
