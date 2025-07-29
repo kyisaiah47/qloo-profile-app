@@ -325,6 +325,112 @@ export default function ProfileForm() {
 		}
 	};
 
+	const handleUpdateProfile = async () => {
+		if (!userId) {
+			console.error("No user ID available for update");
+			return;
+		}
+
+		setIsLoading(true);
+
+		try {
+			const resolvedEntities: Record<string, InsightItem[]> = {};
+			const insightMap: Record<string, InsightItem[]> = {};
+
+			// Process Qloo API calls for updated interests
+			for (const type of QLOO_TYPES) {
+				const values = formData[type];
+				if (!values || values.length === 0) continue;
+
+				const typeEntities: InsightItem[] = [];
+				const typeInsights: InsightItem[] = [];
+
+				// Process each value in the array
+				for (const value of values) {
+					const res = await fetch("/api/qloo-search", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ query: value, type }),
+					});
+
+					const json = await res.json();
+					const entity = json.data?.results?.[0];
+					if (entity) {
+						typeEntities.push(entity);
+
+						if (entity?.entity_id) {
+							const insightRes = await fetch("/api/qloo-insights", {
+								method: "POST",
+								headers: { "Content-Type": "application/json" },
+								body: JSON.stringify({
+									entityId: entity.entity_id,
+									type,
+									filterType: "brand",
+									take: 5,
+								}),
+							});
+							const insights = await insightRes.json();
+							const insightResults = insights?.data?.results?.entities ?? [];
+							if (Array.isArray(insightResults)) {
+								typeInsights.push(...insightResults);
+							}
+						}
+					}
+				}
+
+				if (typeEntities.length > 0) {
+					resolvedEntities[type] = typeEntities;
+					insightMap[type] = typeInsights;
+				}
+			}
+
+			// Update existing profile
+			const updateResponse = await fetch("/api/save-profile", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					userId: userId,
+					interests: formData,
+					insights: insightMap,
+				}),
+			});
+
+			const updateResult = await updateResponse.json();
+
+			if (updateResult.success) {
+				console.log("Profile updated successfully!", updateResult);
+				setShowProfile(false);
+
+				// Optionally regenerate AI profile with updated interests
+				try {
+					const aiResponse = await fetch("/api/generate-profile", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({
+							interests: formData,
+							insights: insightMap,
+						}),
+					});
+
+					const aiResult = await aiResponse.json();
+					if (aiResult.success) {
+						setInsightResults({ aiProfile: aiResult.data });
+					}
+				} catch (aiError) {
+					console.error("Error regenerating AI profile:", aiError);
+				}
+			} else {
+				console.error("Failed to update profile:", updateResult.error);
+				alert("Failed to update profile. Please try again.");
+			}
+		} catch (error) {
+			console.error("Error during profile update:", error);
+			alert("An error occurred while updating your profile. Please try again.");
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setIsLoading(true);
@@ -502,42 +608,61 @@ export default function ProfileForm() {
 			{/* Profile Management Screen */}
 			{showProfile && (
 				<motion.div
-					initial={{ opacity: 0 }}
-					animate={{ opacity: 1 }}
-					transition={{ duration: 0.3 }}
-					className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-					onClick={() => setShowProfile(false)}
+					initial={{ opacity: 0, x: "100%" }}
+					animate={{ opacity: 1, x: 0 }}
+					exit={{ opacity: 0, x: "100%" }}
+					transition={{ duration: 0.3, ease: "easeInOut" }}
+					className="fixed inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 z-50"
 				>
-					<motion.div
-						initial={{ scale: 0.9, opacity: 0 }}
-						animate={{ scale: 1, opacity: 1 }}
-						transition={{ duration: 0.3 }}
-						className="bg-slate-800 rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-slate-700"
-						onClick={(e) => e.stopPropagation()}
-					>
-						<div className="p-6 border-b border-slate-700 flex items-center justify-between">
-							<h2 className="text-2xl font-bold text-slate-200">
-								Profile Settings ⚙️
-							</h2>
+					{/* Header */}
+					<div className="bg-slate-800/95 backdrop-blur-sm border-b border-slate-700 p-6">
+						<div className="max-w-6xl mx-auto flex items-center justify-between">
+							<div className="flex items-center gap-3">
+								<div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+									<span className="text-xl">⚙️</span>
+								</div>
+								<div>
+									<h1 className="text-2xl font-bold text-slate-200">
+										Profile Settings
+									</h1>
+									<p className="text-sm text-slate-400">
+										Manage your profile and preferences
+									</p>
+								</div>
+							</div>
 							<Button
-								variant="ghost"
-								size="sm"
+								variant="outline"
+								size="lg"
 								onClick={() => setShowProfile(false)}
-								className="text-slate-400 hover:text-slate-200"
+								className="text-slate-300 border-slate-600 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500 transition-all"
 							>
-								✕
+								<span className="mr-2">←</span>
+								Back to Matches
 							</Button>
 						</div>
+					</div>
 
-						<div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-							<div className="space-y-8">
-								{/* User ID Section */}
-								<Card className="bg-slate-700 border-slate-600">
-									<CardContent className="p-6">
-										<h3 className="text-lg font-semibold text-slate-200 mb-4">
-											User ID
-										</h3>
+					{/* Content */}
+					<div className="flex-1 overflow-y-auto p-6">
+						<div className="max-w-6xl mx-auto space-y-8">
+							{/* Personal Info Section */}
+							<Card className="bg-slate-800/50 border-slate-700">
+								<CardContent className="p-8">
+									<div className="flex items-center gap-3 mb-6">
+										<div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
+											<span className="text-sm">👤</span>
+										</div>
+										<h2 className="text-xl font-semibold text-slate-200">
+											Personal Information
+										</h2>
+									</div>
+
+									<div className="grid md:grid-cols-2 gap-8">
+										{/* User ID Section */}
 										<div className="space-y-4">
+											<h3 className="text-lg font-medium text-slate-200">
+												User ID
+											</h3>
 											{editingUserId ? (
 												<div className="space-y-3">
 													<div>
@@ -555,7 +680,7 @@ export default function ProfileForm() {
 																setUserIdError("");
 															}}
 															placeholder="Enter your new User ID"
-															className="bg-slate-600 border-slate-500 text-slate-200"
+															className="bg-slate-700 border-slate-600 text-slate-200 focus:border-blue-500"
 														/>
 														{userIdError && (
 															<p className="text-red-400 text-sm">
@@ -569,7 +694,7 @@ export default function ProfileForm() {
 															size="sm"
 															className="bg-blue-600 hover:bg-blue-500"
 														>
-															Save
+															Save Changes
 														</Button>
 														<Button
 															onClick={() => {
@@ -579,17 +704,19 @@ export default function ProfileForm() {
 															}}
 															variant="outline"
 															size="sm"
-															className="border-slate-600 text-slate-300"
+															className="border-slate-600 text-slate-300 hover:bg-slate-700"
 														>
 															Cancel
 														</Button>
 													</div>
 												</div>
 											) : (
-												<div className="flex items-center justify-between">
-													<div>
-														<p className="text-slate-300 font-mono">{userId}</p>
-														<p className="text-sm text-slate-400">
+												<div className="space-y-3">
+													<div className="p-4 bg-slate-700/50 rounded-lg border border-slate-600">
+														<p className="text-slate-300 font-mono text-lg">
+															{userId}
+														</p>
+														<p className="text-sm text-slate-400 mt-1">
 															This is your unique identifier
 														</p>
 													</div>
@@ -600,84 +727,121 @@ export default function ProfileForm() {
 														}}
 														variant="outline"
 														size="sm"
-														className="border-slate-600 text-slate-300"
+														className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500 transition-all"
 													>
-														Edit
+														<span className="mr-1">✏️</span>
+														Edit User ID
 													</Button>
 												</div>
 											)}
 										</div>
-									</CardContent>
-								</Card>
 
-								{/* Interests Section */}
-								<Card className="bg-slate-700 border-slate-600">
-									<CardContent className="p-6">
-										<h3 className="text-lg font-semibold text-slate-200 mb-4">
-											Update Your Interests
-										</h3>
-										<p className="text-sm text-slate-400 mb-6">
-											Modify your interests to find better matches
-										</p>
-
-										<div className="space-y-6">
-											{QLOO_TYPES.map((type) => (
-												<div
-													key={type}
-													className="space-y-2"
+										{/* Personal Blurb Section */}
+										<div className="space-y-4">
+											<h3 className="text-lg font-medium text-slate-200">
+												Personal Blurb
+											</h3>
+											<div className="space-y-3">
+												<Label
+													htmlFor="personal-blurb"
+													className="text-slate-300"
 												>
-													<Label
-														htmlFor={type}
-														className="text-sm font-medium text-slate-300 flex items-center gap-2"
+													Tell others about yourself
+												</Label>
+												<textarea
+													id="personal-blurb"
+													placeholder="Write a short description about yourself, your interests, or what you're looking for in connections..."
+													className="w-full h-32 p-4 bg-slate-700 border border-slate-600 rounded-lg text-slate-200 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none transition-all"
+												/>
+												<div className="flex justify-between items-center">
+													<p className="text-xs text-slate-400">
+														Max 280 characters
+													</p>
+													<Button
+														variant="outline"
+														size="sm"
+														className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500 transition-all"
 													>
-														{getTypeEmoji(type)}
-														<span className="capitalize">
-															{type.replace("_", " ")}
-														</span>
-													</Label>
-													<ChipInput
-														id={type}
-														values={formData[type] || []}
-														onChange={(values) => handleChange(type, values)}
-														placeholder={getPlaceholder(type)}
-														className="w-full"
-													/>
+														Save Blurb
+													</Button>
 												</div>
-											))}
+											</div>
 										</div>
+									</div>
+								</CardContent>
+							</Card>
 
-										<div className="mt-8 flex gap-4">
-											<Button
-												onClick={(e) => {
-													e.preventDefault();
-													handleSubmit(e);
-													setShowProfile(false);
-												}}
-												disabled={isLoading}
-												className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500"
-											>
-												{isLoading ? (
-													<>
-														<div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-														Updating Profile...
-													</>
-												) : (
-													"Update Profile 🔄"
-												)}
-											</Button>
-											<Button
-												onClick={() => setShowProfile(false)}
-												variant="outline"
-												className="border-slate-600 text-slate-300"
-											>
-												Cancel
-											</Button>
+							{/* Interests Section */}
+							<Card className="bg-slate-800/50 border-slate-700">
+								<CardContent className="p-8">
+									<div className="flex items-center gap-3 mb-6">
+										<div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+											<span className="text-sm">🎯</span>
 										</div>
-									</CardContent>
-								</Card>
-							</div>
+										<h2 className="text-xl font-semibold text-slate-200">
+											Update Your Interests
+										</h2>
+									</div>
+									<p className="text-slate-400 mb-6">
+										Modify your interests to find better matches
+									</p>
+
+									<div className="space-y-6">
+										{QLOO_TYPES.map((type) => (
+											<div
+												key={type}
+												className="space-y-2"
+											>
+												<Label
+													htmlFor={type}
+													className="text-sm font-medium text-slate-300 flex items-center gap-2"
+												>
+													{getTypeEmoji(type)}
+													<span className="capitalize">
+														{type.replace("_", " ")}
+													</span>
+												</Label>
+												<ChipInput
+													id={type}
+													values={formData[type] || []}
+													onChange={(values) => handleChange(type, values)}
+													placeholder={getPlaceholder(type)}
+													className="w-full"
+												/>
+											</div>
+										))}
+									</div>
+
+									<div className="mt-8 flex gap-4">
+										<Button
+											onClick={handleUpdateProfile}
+											disabled={isLoading}
+											className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500"
+										>
+											{isLoading ? (
+												<>
+													<div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+													Updating Profile...
+												</>
+											) : (
+												<>
+													<span className="mr-2">🔄</span>
+													Update Profile
+												</>
+											)}
+										</Button>
+										<Button
+											onClick={() => setShowProfile(false)}
+											variant="outline"
+											className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500 transition-all"
+										>
+											Cancel
+										</Button>
+									</div>
+								</CardContent>
+							</Card>
 						</div>
-					</motion.div>
+					</div>
 				</motion.div>
 			)}
 		</div>
@@ -1111,9 +1275,10 @@ const ProfileFormScreen = ({
 											setShowMatches(false);
 											setShowProfile(true);
 										}}
-										className="text-slate-300 border-slate-600 hover:bg-slate-700"
+										className="text-slate-300 border-slate-600 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500 transition-all"
 									>
-										Edit Profile ⚙️
+										<span className="mr-1">⚙️</span>
+										Edit Profile
 									</Button>
 									<Button
 										variant="ghost"
