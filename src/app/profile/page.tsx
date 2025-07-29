@@ -34,27 +34,10 @@ export default function ProfileForm() {
 		setFormData({ ...formData, [type]: value });
 	};
 
-	const handleSubmit = async (e: React.FormEvent) => {
+	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
-
-		const resolvedEntities: Record<string, any> = {};
-
-		for (const type of QLOO_TYPES) {
-			const value = formData[type];
-			if (!value) continue;
-
-			const res = await fetch("/api/qloo-search", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ query: value, type }),
-			});
-
-			const json = await res.json();
-			const entity = json.data?.results?.[0];
-			resolvedEntities[type] = entity || null;
-		}
-
-		console.log("Resolved entity IDs:", resolvedEntities);
+		console.log("Submitted:", formData);
+		// later: send to Qloo lookup endpoint
 	};
 
 	return (
