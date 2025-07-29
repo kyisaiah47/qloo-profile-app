@@ -170,7 +170,7 @@ export default function ProfileForm() {
 					className="flex-1 flex flex-col max-w-7xl mx-auto w-full"
 				>
 					{/* Compact Header */}
-					<div className="text-center mb-8">
+					{/* <div className="text-center mb-8">
 						<motion.h1
 							initial={{ opacity: 0, y: -20 }}
 							animate={{ opacity: 1, y: 0 }}
@@ -189,7 +189,7 @@ export default function ProfileForm() {
 							Discover personalized recommendations by sharing your preferences
 							across different categories
 						</motion.p>
-					</div>
+					</div> */}
 
 					<motion.form
 						initial={{ opacity: 0, y: 20 }}
@@ -300,40 +300,50 @@ export default function ProfileForm() {
 												</h3>
 												<div className="space-y-2">
 													{Array.isArray(results) && results.length > 0 ? (
-														results.slice(0, 5).map((item) => (
-															<Card
-																key={item.entity_id}
-																className="p-3 hover:shadow-lg transition-shadow bg-slate-700 border-slate-600"
-															>
-																<div className="flex items-center justify-between">
-																	<div className="flex-1 min-w-0">
-																		<p className="font-medium text-sm text-slate-200 truncate">
-																			{item.name}
-																		</p>
-																		<p className="text-xs text-slate-400">
-																			Score: {item.popularity?.toFixed(1)}
-																		</p>
-																	</div>
-																	<div className="flex text-xs">
-																		{[...Array(5)].map((_, i) => (
-																			<span
-																				key={i}
-																				className={`${
-																					i <
-																					Math.floor(
-																						(item.popularity || 0) / 20
-																					)
-																						? "text-yellow-400"
-																						: "text-slate-600"
-																				}`}
-																			>
-																				★
-																			</span>
-																		))}
-																	</div>
-																</div>
-															</Card>
-														))
+														(() => {
+															console.log(`Results for ${type}:`, results);
+															console.log(`First item structure:`, results[0]);
+															return results.slice(0, 5).map((item) => {
+																console.log(
+																	`Individual item for ${type}:`,
+																	item
+																);
+																return (
+																	<Card
+																		key={item.entity_id}
+																		className="p-3 hover:shadow-lg transition-shadow bg-slate-700 border-slate-600"
+																	>
+																		<div className="flex items-center justify-between">
+																			<div className="flex-1 min-w-0">
+																				<p className="font-medium text-sm text-slate-200 truncate">
+																					{item.name}
+																				</p>
+																				<p className="text-xs text-slate-400">
+																					Score: {item.popularity?.toFixed(1)}
+																				</p>
+																			</div>
+																			<div className="flex text-xs">
+																				{[...Array(5)].map((_, i) => (
+																					<span
+																						key={i}
+																						className={`${
+																							i <
+																							Math.floor(
+																								(item.popularity || 0) / 20
+																							)
+																								? "text-yellow-400"
+																								: "text-slate-600"
+																						}`}
+																					>
+																						★
+																					</span>
+																				))}
+																			</div>
+																		</div>
+																	</Card>
+																);
+															});
+														})()
 													) : (
 														<p className="text-sm text-slate-500">
 															No recommendations found
