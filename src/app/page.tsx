@@ -251,6 +251,8 @@ export default function ProfileForm() {
 	const [contactInfo, setContactInfo] = useState("");
 	const [contactError, setContactError] = useState("");
 	const [generatingUsername, setGeneratingUsername] = useState(false);
+	const [bulkInput, setBulkInput] = useState("");
+	const [showBulkInput, setShowBulkInput] = useState(false);
 
 	// Debug useEffect to track insightResults changes
 	useEffect(() => {
@@ -465,6 +467,60 @@ Please respond with ONLY the username, nothing else.`;
 		} finally {
 			setGeneratingUsername(false);
 		}
+	};
+
+	// Bulk input parsing function
+	const parseAndFillFields = (inputString: string) => {
+		const values = inputString
+			.split(";")
+			.map((v) => v.trim())
+			.filter((v) => v.length > 0);
+		const fields = [
+			"artist",
+			"album",
+			"book",
+			"movie",
+			"tv_show",
+			"destination",
+			"place",
+			"brand",
+			"videogame",
+			"podcast",
+			"actor",
+			"director",
+			"author",
+			"person",
+			"locality",
+			"tag",
+			"demographics",
+		];
+
+		const newFormData = { ...formData };
+
+		fields.forEach((field, index) => {
+			if (values[index]) {
+				// Split by commas if multiple values in one field
+				const fieldValues = values[index]
+					.split(",")
+					.map((v) => v.trim())
+					.filter((v) => v.length > 0);
+				newFormData[field] = fieldValues;
+			}
+		});
+
+		// Handle contact info (second to last value)
+		if (values[values.length - 2]) {
+			setContactInfo(values[values.length - 2]);
+		}
+
+		// Handle username (last value)
+		if (values[values.length - 1]) {
+			setConnectionUserId(values[values.length - 1]);
+		}
+
+		setFormData(newFormData);
+		setBulkInput("");
+		setShowBulkInput(false);
 	};
 
 	const checkUserIdUnique = async (testUserId: string) => {
@@ -985,6 +1041,11 @@ Please respond with ONLY the username, nothing else.`;
 					setContactError={setContactError}
 					generateUsername={generateUsername}
 					generatingUsername={generatingUsername}
+					bulkInput={bulkInput}
+					setBulkInput={setBulkInput}
+					showBulkInput={showBulkInput}
+					setShowBulkInput={setShowBulkInput}
+					parseAndFillFields={parseAndFillFields}
 				/>
 			)}
 
@@ -1993,6 +2054,11 @@ interface ProfileFormScreenProps {
 	setContactError: (error: string) => void;
 	generateUsername: () => Promise<void>;
 	generatingUsername: boolean;
+	bulkInput: string;
+	setBulkInput: (value: string) => void;
+	showBulkInput: boolean;
+	setShowBulkInput: (show: boolean) => void;
+	parseAndFillFields: (inputString: string) => void;
 }
 
 const ProfileFormScreen = ({
@@ -2020,6 +2086,11 @@ const ProfileFormScreen = ({
 	setContactError,
 	generateUsername,
 	generatingUsername,
+	bulkInput,
+	setBulkInput,
+	showBulkInput,
+	setShowBulkInput,
+	parseAndFillFields,
 }: ProfileFormScreenProps) => {
 	return (
 		<div className="h-full flex flex-col relative z-10 p-6">
@@ -2074,6 +2145,64 @@ const ProfileFormScreen = ({
 									`,
 									}}
 								/>
+
+								{/* Bulk Input Section */}
+								<div className="mb-6 border-b border-slate-600 pb-6">
+									<div className="flex items-center justify-between mb-3">
+										<h3 className="text-lg font-semibold text-slate-200">
+											Quick Fill
+										</h3>
+										<button
+											type="button"
+											onClick={() => setShowBulkInput(!showBulkInput)}
+											className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+										>
+											{showBulkInput ? "Hide" : "Show"} Bulk Input
+										</button>
+									</div>
+
+									{showBulkInput && (
+										<motion.div
+											initial={{ opacity: 0, height: 0 }}
+											animate={{ opacity: 1, height: "auto" }}
+											exit={{ opacity: 0, height: 0 }}
+											className="space-y-3"
+										>
+											<p className="text-xs text-slate-400">
+												Paste values separated by semicolons (;) to auto-fill
+												all fields. Format:
+												artist1,artist2;album1,album2;book1,book2;...;contact;username
+											</p>
+											<textarea
+												value={bulkInput}
+												onChange={(e) => setBulkInput(e.target.value)}
+												placeholder="Enter semicolon-separated values..."
+												className="w-full h-24 p-3 bg-slate-700 border border-slate-600 rounded-md text-slate-200 placeholder-slate-400 text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+											/>
+											<div className="flex gap-2">
+												<button
+													type="button"
+													onClick={() => parseAndFillFields(bulkInput)}
+													disabled={!bulkInput.trim()}
+													className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-sm transition-colors"
+												>
+													Parse & Fill Fields
+												</button>
+												<button
+													type="button"
+													onClick={() => {
+														setBulkInput("");
+														setShowBulkInput(false);
+													}}
+													className="px-4 py-2 bg-slate-600 text-slate-300 rounded-md hover:bg-slate-700 text-sm transition-colors"
+												>
+													Clear
+												</button>
+											</div>
+										</motion.div>
+									)}
+								</div>
+
 								<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-4 pr-1">
 									{QLOO_TYPES.map((type, index) => (
 										<motion.div
