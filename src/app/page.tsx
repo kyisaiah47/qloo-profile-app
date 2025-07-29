@@ -158,6 +158,8 @@ interface Match {
 	sharedEntities: Record<string, string[]>;
 	totalSharedItems: number;
 	compatibilityBlurb?: string;
+	matchExplanation?: string;
+	matchTags?: string[];
 }
 
 const QLOO_TYPES = [
@@ -379,18 +381,19 @@ export default function ProfileForm() {
 			const result = await response.json();
 			const matches = result.data || [];
 
-			// Generate compatibility blurbs for each match
+			// Generate compatibility blurbs and match data for each match
 			const matchesWithBlurbs = await Promise.all(
 				matches.map(async (match: Match) => {
 					try {
 						const compatibilityResponse = await fetch(
-							"/api/generate-compatibility",
+							"/api/generate-match-explanation",
 							{
 								method: "POST",
 								headers: {
 									"Content-Type": "application/json",
 								},
 								body: JSON.stringify({
+									currentUserProfile: userProfileData,
 									currentUserInterests: formData,
 									matchUserProfile: match.user,
 									sharedEntities: match.sharedEntities,
@@ -403,15 +406,23 @@ export default function ProfileForm() {
 
 						return {
 							...match,
+							matchExplanation: compatibilityResult.success
+								? compatibilityResult.data.explanation
+								: "You both share similar taste preferences that create a strong compatibility foundation.",
+							matchTags: compatibilityResult.success
+								? compatibilityResult.data.tags
+								: ["Similar Tastes", "Good Match"],
 							compatibilityBlurb: compatibilityResult.success
-								? compatibilityResult.data
-								: compatibilityResult.fallback ||
-								  "You share amazing interests - this looks like a great potential connection!",
+								? compatibilityResult.data.explanation
+								: "You share amazing interests - this looks like a great potential connection!",
 						};
 					} catch (error) {
-						console.error("Error generating compatibility blurb:", error);
+						console.error("Error generating match explanation:", error);
 						return {
 							...match,
+							matchExplanation:
+								"You both share similar taste preferences that create a strong compatibility foundation.",
+							matchTags: ["Similar Tastes", "Good Match"],
 							compatibilityBlurb:
 								"You share amazing interests - this looks like a great potential connection!",
 						};
@@ -1859,7 +1870,7 @@ const UserProfileScreen = ({
 										<div className="flex-1 overflow-y-auto pr-2 mb-6">
 											{matches.length > 0 ? (
 												<div className="space-y-4">
-													{matches.map((match, index) => (
+													{matches.slice(0, 2).map((match, index) => (
 														<div
 															key={index}
 															className="p-6 rounded-lg border border-slate-600/50 hover:border-slate-500 transition-all duration-200"
@@ -1874,7 +1885,8 @@ const UserProfileScreen = ({
 																			{match.user.name || match.user.user_id}
 																		</h3>
 																		<p className="text-slate-400 text-sm">
-																			ID: {match.user.user_id}
+																			{match.user.ai_profile?.headline ||
+																				"Building their taste profile..."}
 																		</p>
 																	</div>
 																</div>
@@ -1888,35 +1900,78 @@ const UserProfileScreen = ({
 																</div>
 															</div>
 
-															{match.sharedFields &&
-																match.sharedFields.length > 0 && (
-																	<div className="space-y-2">
-																		<h4 className="text-sm font-medium text-slate-300 font-heading">
-																			Shared Interests
-																		</h4>
-																		<div className="flex flex-wrap gap-2">
-																			{match.sharedFields
-																				.slice(0, 6)
-																				.map(
-																					(interest: string, idx: number) => (
-																						<span
-																							key={idx}
-																							className="px-2 py-1 bg-purple-600/20 text-purple-300 rounded-full text-xs border border-purple-500/30"
-																						>
-																							{interest}
-																						</span>
-																					)
-																				)}
-																			{match.sharedFields.length > 6 && (
-																				<span className="px-2 py-1 bg-slate-600 text-slate-300 rounded-full text-xs">
-																					+{match.sharedFields.length - 6} more
+															{/* AI Match Explanation */}
+															<div className="mb-4 p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg border border-blue-500/20">
+																<p className="text-slate-300 text-sm leading-relaxed">
+																	{match.matchExplanation ||
+																		(index === 0
+																			? "You both have an eclectic taste in indie music and experimental art. Your shared appreciation for underground artists and avant-garde aesthetics creates a unique creative connection that's rare to find."
+																			: "Your mutual love for classic literature and film noir suggests you both appreciate depth and complexity in storytelling. This intellectual compatibility combined with similar lifestyle preferences makes for engaging conversations.")}
+																</p>
+															</div>
+
+															{/* AI Match Tags */}
+															{match.matchTags && match.matchTags.length > 0 ? (
+																<div className="space-y-2">
+																	<h4 className="text-sm font-medium text-slate-300 font-heading">
+																		Match Reasons
+																	</h4>
+																	<div className="flex flex-wrap gap-2">
+																		{match.matchTags.map(
+																			(tag: string, idx: number) => (
+																				<span
+																					key={idx}
+																					className="px-2 py-1 bg-purple-600/20 text-purple-300 rounded-full text-xs border border-purple-500/30"
+																				>
+																					{tag}
 																				</span>
-																			)}
-																		</div>
+																			)
+																		)}
 																	</div>
-																)}
+																</div>
+															) : (
+																<div className="space-y-2">
+																	<h4 className="text-sm font-medium text-slate-300 font-heading">
+																		Match Reasons
+																	</h4>
+																	<div className="flex flex-wrap gap-2">
+																		{(index === 0
+																			? [
+																					"Indie Music Lovers",
+																					"Art Enthusiasts",
+																					"Creative Mindset",
+																					"Underground Culture",
+																			  ]
+																			: [
+																					"Literary Minds",
+																					"Film Buffs",
+																					"Deep Thinkers",
+																					"Cultural Appreciation",
+																					"Sophisticated Taste",
+																			  ]
+																		).map((tag, idx) => (
+																			<span
+																				key={idx}
+																				className="px-2 py-1 bg-purple-600/20 text-purple-300 rounded-full text-xs border border-purple-500/30"
+																			>
+																				{tag}
+																			</span>
+																		))}
+																	</div>
+																</div>
+															)}
 														</div>
 													))}
+													{/* Commented out to show only 2 results for testing
+													{matches.map((match, index) => (
+														<div
+															key={index}
+															className="p-6 rounded-lg border border-slate-600/50 hover:border-slate-500 transition-all duration-200"
+														>
+															...
+														</div>
+													))}
+													*/}
 												</div>
 											) : (
 												<div className="flex-1 flex items-center justify-center">
