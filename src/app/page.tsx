@@ -349,10 +349,6 @@ export default function ProfileForm() {
 	};
 
 	const findMatches = async () => {
-		// First validate the connection user ID
-		const isValid = await validateConnectionUserId();
-		if (!isValid) return;
-
 		setLoadingMatches(true);
 		try {
 			const response = await fetch("/api/find-matches", {
@@ -364,13 +360,9 @@ export default function ProfileForm() {
 			});
 
 			const result = await response.json();
-			if (result.success) {
-				setMatches(result.similarUsers || []);
-				setShowMatches(true);
-				safeSetInsightResults({}); // Close the AI profile display
-			} else {
-				console.error("Failed to find matches:", result.message);
-			}
+			setMatches(result.similarUsers || []);
+			setShowMatches(true);
+			safeSetInsightResults({}); // Close the AI profile display
 		} catch (error) {
 			console.error("Error finding matches:", error);
 		} finally {
@@ -619,6 +611,7 @@ Please respond with ONLY the username, nothing else.`;
 				}
 			}
 
+			console.log("user_id", userId);
 			// Update existing profile
 			const updateResponse = await fetch("/api/save-profile", {
 				method: "POST",
@@ -758,15 +751,14 @@ Please respond with ONLY the username, nothing else.`;
 				}
 			}
 
-			console.log("Resolved Entities:", resolvedEntities);
-			console.log("Qloo Insights:", insightMap);
+			console.log("🔍 SUBMIT - User ID:", connectionUserId);
 
 			// Save to database
 			const saveResponse = await fetch("/api/save-profile", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
-					userId: userId || undefined, // Let the API generate one if not provided
+					userId: connectionUserId || undefined, // Let the API generate one if not provided
 					interests: formData,
 					insights: insightMap,
 				}),
@@ -954,10 +946,10 @@ Please respond with ONLY the username, nothing else.`;
 										setShowUserProfile(true);
 									}
 								}}
-								className="text-slate-300 border-slate-600 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500 transition-all"
+								className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white"
 							>
 								<span className="mr-2">←</span>
-								{isLoggedIn ? "Back to Profile" : "Back to Matches"}
+								Back to Matches
 							</Button>
 						</div>
 					</div>
@@ -1039,17 +1031,6 @@ Please respond with ONLY the username, nothing else.`;
 															This is your unique identifier
 														</p>
 													</div>
-													<Button
-														onClick={() => {
-															setEditingUserId(true);
-															setNewUserId(userId);
-														}}
-														size="sm"
-														className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500 transition-all"
-													>
-														<span className="mr-1">✏️</span>
-														Edit User ID
-													</Button>
 												</div>
 											)}
 										</div>
@@ -1077,7 +1058,7 @@ Please respond with ONLY the username, nothing else.`;
 													</p>
 													<Button
 														size="sm"
-														className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500 transition-all"
+														className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white"
 													>
 														Save Blurb
 													</Button>
@@ -1146,17 +1127,6 @@ Please respond with ONLY the username, nothing else.`;
 													Update Profile
 												</>
 											)}
-										</Button>
-										<Button
-											onClick={() => {
-												setShowProfile(false);
-												if (isLoggedIn && userProfileData) {
-													setShowUserProfile(true);
-												}
-											}}
-											className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500 transition-all"
-										>
-											Cancel
 										</Button>
 									</div>
 								</CardContent>
@@ -1940,62 +1910,6 @@ const ProfileFormScreen = ({
 
 										{/* Action Buttons */}
 										<div className="space-y-4 pt-4">
-											{/* Username Input for Finding Connections */}
-											<div className="max-w-md mx-auto">
-												<Label
-													htmlFor="modalConnectionUserId"
-													className="text-sm font-medium text-slate-300 mb-2 block"
-												>
-													Enter Username to Find Connections
-												</Label>
-												<div className="relative flex gap-2">
-													<Input
-														id="modalConnectionUserId"
-														type="text"
-														placeholder="Enter username..."
-														value={connectionUserId}
-														onChange={(e) => {
-															setConnectionUserId(e.target.value);
-															setConnectionUserIdError(""); // Clear error when typing
-														}}
-														className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 pr-10"
-														disabled={
-															loadingMatches ||
-															validatingConnectionUserId ||
-															generatingUsername
-														}
-													/>
-													<Button
-														type="button"
-														onClick={generateUsername}
-														disabled={
-															loadingMatches ||
-															validatingConnectionUserId ||
-															generatingUsername
-														}
-														className="px-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white"
-														title="Generate username from interests"
-													>
-														{generatingUsername ? (
-															<div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
-														) : (
-															"✨"
-														)}
-													</Button>
-													{(validatingConnectionUserId ||
-														generatingUsername) && (
-														<div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-															<div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-														</div>
-													)}
-												</div>
-												{connectionUserIdError && (
-													<p className="text-red-400 text-xs mt-1">
-														{connectionUserIdError}
-													</p>
-												)}
-											</div>
-
 											<div className="flex gap-4">
 												<Button
 													onClick={findMatches}
@@ -2074,10 +1988,10 @@ const ProfileFormScreen = ({
 											setShowMatches(false);
 											setShowProfile(true);
 										}}
-										className="text-slate-300 border-slate-600 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500 transition-all"
+										className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white"
 									>
 										<span className="mr-1">⚙️</span>
-										Edit Profile
+										Go to Profile
 									</Button>
 									<Button
 										variant="ghost"
