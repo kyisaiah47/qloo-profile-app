@@ -248,8 +248,6 @@ export default function ProfileForm() {
 	const [userIdError, setUserIdError] = useState("");
 	const [connectionUserId, setConnectionUserId] = useState("");
 	const [connectionUserIdError, setConnectionUserIdError] = useState("");
-	const [validatingConnectionUserId, setValidatingConnectionUserId] =
-		useState(false);
 	const [generatingUsername, setGeneratingUsername] = useState(false);
 
 	// Debug useEffect to track insightResults changes
@@ -362,7 +360,7 @@ export default function ProfileForm() {
 				headers: {
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({ userId: connectionUserId.trim() }),
+				body: JSON.stringify({ userId: connectionUserId.trim() || userId }),
 			});
 
 			const result = await response.json();
@@ -870,6 +868,7 @@ Please respond with ONLY the username, nothing else.`;
 					userId={userId}
 					findMatches={findMatches}
 					loadingMatches={loadingMatches}
+					matches={matches}
 					onEditProfile={() => {
 						if (userProfileData?.interests) {
 							setFormData(userProfileData.interests);
@@ -905,7 +904,6 @@ Please respond with ONLY the username, nothing else.`;
 					setConnectionUserId={setConnectionUserId}
 					connectionUserIdError={connectionUserIdError}
 					setConnectionUserIdError={setConnectionUserIdError}
-					validatingConnectionUserId={validatingConnectionUserId}
 					generateUsername={generateUsername}
 					generatingUsername={generatingUsername}
 				/>
@@ -1415,6 +1413,7 @@ const UserProfileScreen = ({
 	userId,
 	findMatches,
 	loadingMatches,
+	matches,
 	onEditProfile,
 	onLogout,
 }: {
@@ -1422,11 +1421,23 @@ const UserProfileScreen = ({
 	userId: string;
 	findMatches: () => void;
 	loadingMatches: boolean;
+	matches: Match[];
 	onEditProfile: () => void;
 	onLogout: () => void;
 }) => {
 	const [tasteProfile, setTasteProfile] = useState<AIProfile | null>(null);
 	const [loadingTasteProfile, setLoadingTasteProfile] = useState(false);
+	const [showMatches, setShowMatches] = useState(false);
+
+	// Handle finding matches within UserProfileScreen
+	const handleFindMatches = async () => {
+		try {
+			await findMatches();
+			setShowMatches(true);
+		} catch (error) {
+			console.error("Error finding matches:", error);
+		}
+	};
 
 	// Load taste profile on mount
 	useEffect(() => {
@@ -1544,12 +1555,12 @@ const UserProfileScreen = ({
 		}
 	}, [userProfileData?.interests, userId]);
 	return (
-		<div className="h-full flex flex-col relative z-10 p-6">
+		<div className="h-screen flex flex-col relative z-10 p-6">
 			<motion.div
 				initial={{ opacity: 0, y: 20 }}
 				animate={{ opacity: 1, y: 0 }}
 				transition={{ duration: 0.6 }}
-				className="flex-1 flex flex-col max-w-4xl mx-auto w-full"
+				className="flex-1 flex flex-col max-w-4xl mx-auto w-full min-h-0"
 			>
 				{/* Header */}
 				<motion.div
@@ -1579,248 +1590,311 @@ const UserProfileScreen = ({
 					</div>
 				</motion.div>
 
-				<motion.div
-					initial={{ opacity: 0, y: 20 }}
-					animate={{ opacity: 1, y: 0 }}
-					transition={{ delay: 0.4, duration: 0.6 }}
-					className="flex-1"
-				>
-					<Card className="shadow-xl border border-slate-700 bg-slate-800/90 backdrop-blur-sm h-full">
-						<CardContent className="p-8 h-full flex flex-col">
-							{/* Profile Info */}
-							<div className="space-y-6 flex-1">
-								{userProfileData?.profile?.ai_profile && (
-									<div className="bg-slate-700/50 p-6 rounded-lg border border-slate-600">
-										<h3 className="text-xl font-semibold text-slate-200 mb-3">
-											Your Vibe
-										</h3>
-										<p className="text-slate-300 leading-relaxed">
-											{
-												JSON.parse(userProfileData.profile.ai_profile)
-													.description
-											}
-										</p>
-									</div>
-								)}
-
-								{/* Interests Summary */}
-								{userProfileData?.interests &&
-									Object.keys(userProfileData.interests).length > 0 && (
-										<div className="bg-slate-700/50 p-6 rounded-lg border border-slate-600">
-											<h3 className="text-xl font-semibold text-slate-200 mb-4">
-												Your Interests
-											</h3>
-											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-												{Object.entries(userProfileData.interests)
-													.slice(0, 6)
-													.map(([type, items]: [string, string[]]) => (
-														<div
-															key={type}
-															className="space-y-2"
-														>
-															<h4 className="text-sm font-medium text-slate-300 capitalize">
-																{type.replace("_", " ")}
-															</h4>
-															<div className="flex flex-wrap gap-1">
-																{items
-																	.slice(0, 3)
-																	.map((item: string, index: number) => (
-																		<span
-																			key={index}
-																			className="px-2 py-1 bg-blue-600/20 text-blue-300 rounded-full text-xs border border-blue-500/30"
-																		>
-																			{item}
-																		</span>
-																	))}
-																{items.length > 3 && (
-																	<span className="px-2 py-1 bg-slate-600 text-slate-300 rounded-full text-xs">
-																		+{items.length - 3} more
-																	</span>
-																)}
-															</div>
-														</div>
-													))}
-											</div>
+				<Card className="shadow-xl border border-slate-700 bg-slate-800/90 backdrop-blur-sm flex-1 min-h-0">
+					<CardContent className="p-8 h-full flex flex-col">
+						<motion.div
+							initial={{ opacity: 0, y: 20 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ delay: 0.4, duration: 0.6 }}
+							className="flex-1 flex flex-col min-h-0"
+						>
+							{showMatches ? (
+								/* Matches View */
+								<>
+									<div className="flex items-center justify-between mb-6">
+										<h2 className="text-2xl font-bold text-slate-200">
+											Your Matches 🤝
+										</h2>
+										<div className="text-slate-400 text-sm">
+											{matches.length} matches found
 										</div>
-									)}
-
-								{/* Taste Profile Section */}
-								<div className="bg-slate-700/50 p-6 rounded-lg border border-slate-600">
-									<div className="flex items-center justify-between mb-4">
-										<div className="flex items-center gap-3">
-											<div className="w-6 h-6 bg-gradient-to-r from-pink-500 to-orange-500 rounded-full flex items-center justify-center">
-												<span className="text-xs">✨</span>
-											</div>
-											<h3 className="text-xl font-semibold text-slate-200">
-												Your Taste Profile
-											</h3>
-											{loadingTasteProfile && (
-												<div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-											)}
-										</div>
-										{tasteProfile && (
-											<Button
-												onClick={generateTasteProfile}
-												disabled={loadingTasteProfile}
-												size="sm"
-												className="bg-gradient-to-r from-pink-600 to-orange-600 hover:from-pink-500 hover:to-orange-500 text-white"
-											>
-												{loadingTasteProfile ? (
-													<div className="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-												) : (
-													<span className="mr-2">🔄</span>
-												)}
-												Refresh
-											</Button>
-										)}
 									</div>
 
-									<div
-										className="max-h-80 overflow-y-auto pr-2 taste-profile-scroll"
-										style={{
-											scrollbarWidth: "thin",
-											scrollbarColor: "rgb(71 85 105) rgb(30 41 59)",
-										}}
-									>
-										<style
-											dangerouslySetInnerHTML={{
-												__html: `
-												.taste-profile-scroll::-webkit-scrollbar {
-													width: 6px;
-												}
-												.taste-profile-scroll::-webkit-scrollbar-track {
-													background: rgb(30 41 59);
-													border-radius: 3px;
-												}
-												.taste-profile-scroll::-webkit-scrollbar-thumb {
-													background: rgb(71 85 105);
-													border-radius: 3px;
-												}
-												.taste-profile-scroll::-webkit-scrollbar-thumb:hover {
-													background: rgb(100 116 139);
-												}
-											`,
-											}}
-										/>
-										{tasteProfile ? (
+									<div className="flex-1 overflow-y-auto pr-2 mb-6">
+										{matches.length > 0 ? (
 											<div className="space-y-4">
-												{/* Headline */}
-												<div className="p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg border border-blue-500/20">
-													<h4 className="text-blue-400 font-semibold mb-2">
-														Headline
-													</h4>
-													<p className="text-slate-200">
-														{tasteProfile.headline}
-													</p>
-												</div>
-
-												{/* Description */}
-												<div className="p-4 bg-gradient-to-r from-green-500/10 to-teal-500/10 rounded-lg border border-green-500/20">
-													<h4 className="text-green-400 font-semibold mb-2">
-														Description
-													</h4>
-													<p className="text-slate-200">
-														{tasteProfile.description}
-													</p>
-												</div>
-
-												{/* Vibe */}
-												{tasteProfile.vibe && (
-													<div className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
-														<h4 className="text-purple-400 font-semibold mb-2">
-															Vibe
-														</h4>
-														<p className="text-slate-200">
-															{tasteProfile.vibe}
-														</p>
-													</div>
-												)}
-
-												{/* Traits */}
-												{tasteProfile.traits &&
-													Array.isArray(tasteProfile.traits) && (
-														<div className="p-4 bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-lg border border-orange-500/20">
-															<h4 className="text-orange-400 font-semibold mb-2">
-																Key Traits
-															</h4>
-															<div className="flex flex-wrap gap-2">
-																{tasteProfile.traits.map(
-																	(trait: string, index: number) => (
-																		<span
-																			key={index}
-																			className="px-3 py-1 bg-orange-500/20 text-orange-300 rounded-full text-sm"
-																		>
-																			{trait}
-																		</span>
-																	)
-																)}
+												{matches.map((match, index) => (
+													<div
+														key={index}
+														className="p-6 bg-slate-700/50 rounded-lg border border-slate-600 hover:border-slate-500 transition-all duration-200"
+													>
+														<div className="flex items-center justify-between mb-4">
+															<div className="flex items-center gap-3">
+																<div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-lg">
+																	👤
+																</div>
+																<div>
+																	<h3 className="font-semibold text-slate-200">
+																		{match.user.name || match.user.user_id}
+																	</h3>
+																	<p className="text-slate-400 text-sm">
+																		ID: {match.user.user_id}
+																	</p>
+																</div>
+															</div>
+															<div className="text-right">
+																<div className="text-lg font-bold text-green-400">
+																	{Math.round(match.matchScore * 100)}%
+																</div>
+																<div className="text-xs text-slate-400">
+																	compatibility
+																</div>
 															</div>
 														</div>
-													)}
 
-												{/* Compatibility */}
-												{tasteProfile.compatibility && (
-													<div className="p-4 bg-gradient-to-r from-indigo-500/10 to-blue-500/10 rounded-lg border border-indigo-500/20">
-														<h4 className="text-indigo-400 font-semibold mb-2">
-															Compatibility
-														</h4>
-														<p className="text-slate-200">
-															{tasteProfile.compatibility}
-														</p>
+														{match.sharedFields &&
+															match.sharedFields.length > 0 && (
+																<div className="space-y-2">
+																	<h4 className="text-sm font-medium text-slate-300">
+																		Shared Interests
+																	</h4>
+																	<div className="flex flex-wrap gap-2">
+																		{match.sharedFields
+																			.slice(0, 6)
+																			.map((interest: string, idx: number) => (
+																				<span
+																					key={idx}
+																					className="px-2 py-1 bg-blue-600/20 text-blue-300 rounded-full text-xs border border-blue-500/30"
+																				>
+																					{interest}
+																				</span>
+																			))}
+																		{match.sharedFields.length > 6 && (
+																			<span className="px-2 py-1 bg-slate-600 text-slate-300 rounded-full text-xs">
+																				+{match.sharedFields.length - 6} more
+																			</span>
+																		)}
+																	</div>
+																</div>
+															)}
 													</div>
-												)}
+												))}
 											</div>
 										) : (
-											<div className="text-center py-8">
-												<p className="text-slate-400 mb-4">
-													{loadingTasteProfile
-														? "Generating your taste profile..."
-														: "Your taste profile will appear here once generated"}
-												</p>
-												{!loadingTasteProfile &&
-													userProfileData?.interests &&
-													Object.keys(userProfileData.interests).length > 0 && (
-														<Button
-															onClick={generateTasteProfile}
-															className="bg-gradient-to-r from-pink-600 to-orange-600 hover:from-pink-500 hover:to-orange-500 text-white"
-														>
-															<span className="mr-2">✨</span>
-															Generate Taste Profile
-														</Button>
-													)}
+											<div className="flex-1 flex items-center justify-center">
+												<div className="text-center">
+													<div className="text-6xl mb-4">🔍</div>
+													<h3 className="text-xl font-semibold text-slate-200 mb-2">
+														No matches found
+													</h3>
+													<p className="text-slate-400">
+														Try adding more interests to find better matches
+													</p>
+												</div>
 											</div>
 										)}
 									</div>
-								</div>
-							</div>
 
-							{/* Action Buttons */}
-							<div className="flex gap-4 pt-6 border-t border-slate-700">
-								<Button
-									onClick={findMatches}
-									disabled={loadingMatches}
-									className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-lg font-semibold text-white"
-								>
-									{loadingMatches ? (
-										<>
-											<div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-											Finding Matches...
-										</>
-									) : (
-										"See Your Matches 🤝"
-									)}
-								</Button>
-								<Button
-									onClick={onEditProfile}
-									className="px-8 h-12 border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500"
-								>
-									<span className="mr-2">✏️</span>
-									Edit Profile
-								</Button>
-							</div>
-						</CardContent>
-					</Card>
-				</motion.div>
+									{/* Action Button */}
+									<div className="flex gap-4 pt-4 border-t border-slate-700">
+										<Button
+											onClick={() => setShowMatches(false)}
+											className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-lg font-semibold text-white"
+										>
+											<span className="mr-2">←</span>
+											Go to Profile
+										</Button>
+									</div>
+								</>
+							) : (
+								/* Profile View */
+								<>
+									{/* Profile Info */}
+									<div className="space-y-6 flex-1 flex flex-col min-h-0 mb-6">
+										{userProfileData?.profile?.ai_profile && (
+											<div className="bg-slate-700/50 p-6 rounded-lg border border-slate-600">
+												<h3 className="text-xl font-semibold text-slate-200 mb-3">
+													Your Vibe
+												</h3>
+												<p className="text-slate-300 leading-relaxed">
+													{
+														JSON.parse(userProfileData.profile.ai_profile)
+															.description
+													}
+												</p>
+											</div>
+										)}
+
+										{/* Taste Profile Section */}
+										<div className="bg-slate-700/50 p-6 rounded-lg border border-slate-600 flex-1 flex flex-col">
+											<div className="flex items-center justify-between mb-4">
+												<div className="flex items-center gap-3">
+													<div className="w-6 h-6 bg-gradient-to-r from-pink-500 to-orange-500 rounded-full flex items-center justify-center">
+														<span className="text-xs">✨</span>
+													</div>
+													<h3 className="text-xl font-semibold text-slate-200">
+														Your Taste Profile
+													</h3>
+													{loadingTasteProfile && (
+														<div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+													)}
+												</div>
+												{tasteProfile && (
+													<Button
+														onClick={generateTasteProfile}
+														disabled={loadingTasteProfile}
+														size="sm"
+														className="bg-gradient-to-r from-pink-600 to-orange-600 hover:from-pink-500 hover:to-orange-500 text-white"
+													>
+														{loadingTasteProfile ? (
+															<div className="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+														) : (
+															<span className="mr-2">🔄</span>
+														)}
+														Refresh
+													</Button>
+												)}
+											</div>
+
+											<div
+												className="flex-1 overflow-y-auto pr-2 taste-profile-scroll"
+												style={{
+													scrollbarWidth: "thin",
+													scrollbarColor: "rgb(71 85 105) rgb(30 41 59)",
+												}}
+											>
+												<style
+													dangerouslySetInnerHTML={{
+														__html: `
+													.taste-profile-scroll::-webkit-scrollbar {
+														width: 6px;
+													}
+													.taste-profile-scroll::-webkit-scrollbar-track {
+														background: rgb(30 41 59);
+														border-radius: 3px;
+													}
+													.taste-profile-scroll::-webkit-scrollbar-thumb {
+														background: rgb(71 85 105);
+														border-radius: 3px;
+													}
+													.taste-profile-scroll::-webkit-scrollbar-thumb:hover {
+														background: rgb(100 116 139);
+													}
+												`,
+													}}
+												/>
+												{tasteProfile ? (
+													<div className="space-y-4">
+														{/* Headline */}
+														<div className="p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg border border-blue-500/20">
+															<h4 className="text-blue-400 font-semibold mb-2">
+																Headline
+															</h4>
+															<p className="text-slate-200">
+																{tasteProfile.headline}
+															</p>
+														</div>
+
+														{/* Description */}
+														<div className="p-4 bg-gradient-to-r from-green-500/10 to-teal-500/10 rounded-lg border border-green-500/20">
+															<h4 className="text-green-400 font-semibold mb-2">
+																Description
+															</h4>
+															<p className="text-slate-200">
+																{tasteProfile.description}
+															</p>
+														</div>
+
+														{/* Vibe */}
+														{tasteProfile.vibe && (
+															<div className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
+																<h4 className="text-purple-400 font-semibold mb-2">
+																	Vibe
+																</h4>
+																<p className="text-slate-200">
+																	{tasteProfile.vibe}
+																</p>
+															</div>
+														)}
+
+														{/* Traits */}
+														{tasteProfile.traits &&
+															Array.isArray(tasteProfile.traits) && (
+																<div className="p-4 bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-lg border border-orange-500/20">
+																	<h4 className="text-orange-400 font-semibold mb-2">
+																		Key Traits
+																	</h4>
+																	<div className="flex flex-wrap gap-2">
+																		{tasteProfile.traits.map(
+																			(trait: string, index: number) => (
+																				<span
+																					key={index}
+																					className="px-3 py-1 bg-orange-500/20 text-orange-300 rounded-full text-sm"
+																				>
+																					{trait}
+																				</span>
+																			)
+																		)}
+																	</div>
+																</div>
+															)}
+
+														{/* Compatibility */}
+														{tasteProfile.compatibility && (
+															<div className="p-4 bg-gradient-to-r from-indigo-500/10 to-blue-500/10 rounded-lg border border-indigo-500/20">
+																<h4 className="text-indigo-400 font-semibold mb-2">
+																	Compatibility
+																</h4>
+																<p className="text-slate-200">
+																	{tasteProfile.compatibility}
+																</p>
+															</div>
+														)}
+													</div>
+												) : (
+													<div className="text-center py-8">
+														<p className="text-slate-400 mb-4">
+															{loadingTasteProfile
+																? "Generating your taste profile..."
+																: "Your taste profile will appear here once generated"}
+														</p>
+														{!loadingTasteProfile &&
+															userProfileData?.interests &&
+															Object.keys(userProfileData.interests).length >
+																0 && (
+																<Button
+																	onClick={generateTasteProfile}
+																	className="bg-gradient-to-r from-pink-600 to-orange-600 hover:from-pink-500 hover:to-orange-500 text-white"
+																>
+																	<span className="mr-2">✨</span>
+																	Generate Taste Profile
+																</Button>
+															)}
+													</div>
+												)}
+											</div>
+										</div>
+									</div>
+
+									{/* Action Buttons */}
+									<div className="flex gap-4 pt-4 border-t border-slate-700">
+										<Button
+											onClick={handleFindMatches}
+											disabled={loadingMatches}
+											className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-lg font-semibold text-white"
+										>
+											{loadingMatches ? (
+												<>
+													<div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+													Finding Matches...
+												</>
+											) : (
+												"See Your Matches 🤝"
+											)}
+										</Button>
+										<Button
+											onClick={onEditProfile}
+											className="px-8 h-12 border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500"
+										>
+											<span className="mr-2">✏️</span>
+											Edit Profile
+										</Button>
+									</div>
+								</>
+							)}
+						</motion.div>
+					</CardContent>
+				</Card>
 			</motion.div>
 		</div>
 	);
@@ -1847,7 +1921,6 @@ interface ProfileFormScreenProps {
 	setConnectionUserId: (value: string) => void;
 	connectionUserIdError: string;
 	setConnectionUserIdError: (error: string) => void;
-	validatingConnectionUserId: boolean;
 	generateUsername: () => Promise<void>;
 	generatingUsername: boolean;
 }
@@ -1871,7 +1944,6 @@ const ProfileFormScreen = ({
 	setConnectionUserId,
 	connectionUserIdError,
 	setConnectionUserIdError,
-	validatingConnectionUserId,
 	generateUsername,
 	generatingUsername,
 }: ProfileFormScreenProps) => {
@@ -1983,20 +2055,12 @@ const ProfileFormScreen = ({
 												setConnectionUserIdError(""); // Clear error when typing
 											}}
 											className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 pr-10"
-											disabled={
-												isLoading ||
-												validatingConnectionUserId ||
-												generatingUsername
-											}
+											disabled={isLoading || generatingUsername}
 										/>
 										<Button
 											type="button"
 											onClick={generateUsername}
-											disabled={
-												isLoading ||
-												validatingConnectionUserId ||
-												generatingUsername
-											}
+											disabled={isLoading || generatingUsername}
 											className="px-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white"
 											title="Generate username from interests"
 										>
@@ -2006,7 +2070,7 @@ const ProfileFormScreen = ({
 												"✨"
 											)}
 										</Button>
-										{(validatingConnectionUserId || generatingUsername) && (
+										{generatingUsername && (
 											<div className="absolute right-3 top-1/2 transform -translate-y-1/2">
 												<div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
 											</div>
@@ -2023,10 +2087,7 @@ const ProfileFormScreen = ({
 									type="submit"
 									size="lg"
 									disabled={
-										isLoading ||
-										!connectionUserId.trim() ||
-										validatingConnectionUserId ||
-										generatingUsername
+										isLoading || !connectionUserId.trim() || generatingUsername
 									}
 									className="px-8 py-3 text-base font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 transition-all duration-200 shadow-lg text-white disabled:opacity-50"
 								>
@@ -2181,7 +2242,6 @@ const ProfileFormScreen = ({
 													disabled={
 														loadingMatches ||
 														!connectionUserId.trim() ||
-														validatingConnectionUserId ||
 														generatingUsername
 													}
 													className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white"
