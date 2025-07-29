@@ -947,7 +947,7 @@ Please respond with ONLY the username, nothing else.`;
 								className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white"
 							>
 								<span className="mr-2">←</span>
-								Back to Matches
+								Back to Profile
 							</Button>
 						</div>
 					</div>
@@ -1521,7 +1521,7 @@ const UserProfileScreen = ({
 			const aiResult = await aiResponse.json();
 			if (aiResult.success && aiResult.data && aiResult.data.headline) {
 				setTasteProfile(aiResult.data);
-				
+
 				// Save to database
 				const saveResponse = await fetch("/api/save-taste-profile", {
 					method: "POST",
@@ -1531,7 +1531,7 @@ const UserProfileScreen = ({
 						tasteProfile: aiResult.data,
 					}),
 				});
-				
+
 				const saveResult = await saveResponse.json();
 				if (!saveResult.success) {
 					console.error("Failed to save taste profile:", saveResult.error);
@@ -1674,7 +1674,7 @@ const UserProfileScreen = ({
 											</Button>
 										)}
 									</div>
-									
+
 									<div
 										className="max-h-80 overflow-y-auto pr-2 taste-profile-scroll"
 										style={{
@@ -1706,46 +1706,67 @@ const UserProfileScreen = ({
 											<div className="space-y-4">
 												{/* Headline */}
 												<div className="p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg border border-blue-500/20">
-													<h4 className="text-blue-400 font-semibold mb-2">Headline</h4>
-													<p className="text-slate-200">{tasteProfile.headline}</p>
+													<h4 className="text-blue-400 font-semibold mb-2">
+														Headline
+													</h4>
+													<p className="text-slate-200">
+														{tasteProfile.headline}
+													</p>
 												</div>
 
 												{/* Description */}
 												<div className="p-4 bg-gradient-to-r from-green-500/10 to-teal-500/10 rounded-lg border border-green-500/20">
-													<h4 className="text-green-400 font-semibold mb-2">Description</h4>
-													<p className="text-slate-200">{tasteProfile.description}</p>
+													<h4 className="text-green-400 font-semibold mb-2">
+														Description
+													</h4>
+													<p className="text-slate-200">
+														{tasteProfile.description}
+													</p>
 												</div>
 
 												{/* Vibe */}
 												{tasteProfile.vibe && (
 													<div className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
-														<h4 className="text-purple-400 font-semibold mb-2">Vibe</h4>
-														<p className="text-slate-200">{tasteProfile.vibe}</p>
+														<h4 className="text-purple-400 font-semibold mb-2">
+															Vibe
+														</h4>
+														<p className="text-slate-200">
+															{tasteProfile.vibe}
+														</p>
 													</div>
 												)}
 
 												{/* Traits */}
-												{tasteProfile.traits && Array.isArray(tasteProfile.traits) && (
-													<div className="p-4 bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-lg border border-orange-500/20">
-														<h4 className="text-orange-400 font-semibold mb-2">Key Traits</h4>
-														<div className="flex flex-wrap gap-2">
-															{tasteProfile.traits.map((trait: string, index: number) => (
-																<span
-																	key={index}
-																	className="px-3 py-1 bg-orange-500/20 text-orange-300 rounded-full text-sm"
-																>
-																	{trait}
-																</span>
-															))}
+												{tasteProfile.traits &&
+													Array.isArray(tasteProfile.traits) && (
+														<div className="p-4 bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-lg border border-orange-500/20">
+															<h4 className="text-orange-400 font-semibold mb-2">
+																Key Traits
+															</h4>
+															<div className="flex flex-wrap gap-2">
+																{tasteProfile.traits.map(
+																	(trait: string, index: number) => (
+																		<span
+																			key={index}
+																			className="px-3 py-1 bg-orange-500/20 text-orange-300 rounded-full text-sm"
+																		>
+																			{trait}
+																		</span>
+																	)
+																)}
+															</div>
 														</div>
-													</div>
-												)}
+													)}
 
 												{/* Compatibility */}
 												{tasteProfile.compatibility && (
 													<div className="p-4 bg-gradient-to-r from-indigo-500/10 to-blue-500/10 rounded-lg border border-indigo-500/20">
-														<h4 className="text-indigo-400 font-semibold mb-2">Compatibility</h4>
-														<p className="text-slate-200">{tasteProfile.compatibility}</p>
+														<h4 className="text-indigo-400 font-semibold mb-2">
+															Compatibility
+														</h4>
+														<p className="text-slate-200">
+															{tasteProfile.compatibility}
+														</p>
 													</div>
 												)}
 											</div>
@@ -1756,15 +1777,17 @@ const UserProfileScreen = ({
 														? "Generating your taste profile..."
 														: "Your taste profile will appear here once generated"}
 												</p>
-												{!loadingTasteProfile && userProfileData?.interests && Object.keys(userProfileData.interests).length > 0 && (
-													<Button
-														onClick={generateTasteProfile}
-														className="bg-gradient-to-r from-pink-600 to-orange-600 hover:from-pink-500 hover:to-orange-500 text-white"
-													>
-														<span className="mr-2">✨</span>
-														Generate Taste Profile
-													</Button>
-												)}
+												{!loadingTasteProfile &&
+													userProfileData?.interests &&
+													Object.keys(userProfileData.interests).length > 0 && (
+														<Button
+															onClick={generateTasteProfile}
+															className="bg-gradient-to-r from-pink-600 to-orange-600 hover:from-pink-500 hover:to-orange-500 text-white"
+														>
+															<span className="mr-2">✨</span>
+															Generate Taste Profile
+														</Button>
+													)}
 											</div>
 										)}
 									</div>

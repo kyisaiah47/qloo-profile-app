@@ -421,14 +421,16 @@ export const getTasteProfile = async (userId: string) => {
 	try {
 		const { data, error } = await supabase
 			.from("user_profiles")
-			.select(`
+			.select(
+				`
 				taste_profile_headline,
 				taste_profile_description,
 				taste_profile_vibe,
 				taste_profile_traits,
 				taste_profile_compatibility,
 				taste_profile_generated_at
-			`)
+			`
+			)
 			.eq("user_id", userId)
 			.single();
 
