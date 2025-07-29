@@ -380,3 +380,77 @@ export const findSimilarUsers = async (userId: string) => {
 		return { success: false, error };
 	}
 };
+
+// Save taste profile to database
+export const saveTasteProfile = async (
+	userId: string,
+	tasteProfile: {
+		headline: string;
+		description: string;
+		vibe: string;
+		traits: string[];
+		compatibility: string;
+	}
+) => {
+	try {
+		const { data, error } = await supabase
+			.from("user_profiles")
+			.update({
+				taste_profile_headline: tasteProfile.headline,
+				taste_profile_description: tasteProfile.description,
+				taste_profile_vibe: tasteProfile.vibe,
+				taste_profile_traits: tasteProfile.traits,
+				taste_profile_compatibility: tasteProfile.compatibility,
+				taste_profile_generated_at: new Date().toISOString(),
+			})
+			.eq("user_id", userId)
+			.select()
+			.single();
+
+		if (error) throw error;
+
+		return { success: true, data };
+	} catch (error) {
+		console.error("Error saving taste profile:", error);
+		return { success: false, error };
+	}
+};
+
+// Get taste profile from database
+export const getTasteProfile = async (userId: string) => {
+	try {
+		const { data, error } = await supabase
+			.from("user_profiles")
+			.select(`
+				taste_profile_headline,
+				taste_profile_description,
+				taste_profile_vibe,
+				taste_profile_traits,
+				taste_profile_compatibility,
+				taste_profile_generated_at
+			`)
+			.eq("user_id", userId)
+			.single();
+
+		if (error) throw error;
+
+		if (!data?.taste_profile_headline) {
+			return { success: true, data: null };
+		}
+
+		return {
+			success: true,
+			data: {
+				headline: data.taste_profile_headline,
+				description: data.taste_profile_description,
+				vibe: data.taste_profile_vibe,
+				traits: data.taste_profile_traits || [],
+				compatibility: data.taste_profile_compatibility,
+				generated_at: data.taste_profile_generated_at,
+			},
+		};
+	} catch (error) {
+		console.error("Error getting taste profile:", error);
+		return { success: false, error };
+	}
+};

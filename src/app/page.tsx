@@ -251,8 +251,6 @@ export default function ProfileForm() {
 	const [validatingConnectionUserId, setValidatingConnectionUserId] =
 		useState(false);
 	const [generatingUsername, setGeneratingUsername] = useState(false);
-	const [tasteProfile, setTasteProfile] = useState<AIProfile | null>(null);
-	const [loadingTasteProfile, setLoadingTasteProfile] = useState(false);
 
 	// Debug useEffect to track insightResults changes
 	useEffect(() => {
@@ -273,16 +271,6 @@ export default function ProfileForm() {
 		}
 		console.log("=== END DEBUG ===");
 	}, [insightResults]);
-
-	// Generate taste profile when formData changes
-	useEffect(() => {
-		const hasInterests = Object.values(formData).some(
-			(values) => values && values.length > 0
-		);
-		if (hasInterests && userId) {
-			generateTasteProfile();
-		}
-	}, [formData, userId]);
 
 	// Safe wrapper for setInsightResults to prevent error objects from being set
 	const safeSetInsightResults = (
@@ -388,45 +376,6 @@ export default function ProfileForm() {
 		}
 	};
 
-	const validateConnectionUserId = async () => {
-		if (!connectionUserId.trim()) {
-			setConnectionUserIdError("User ID cannot be empty");
-			return false;
-		}
-
-		setValidatingConnectionUserId(true);
-		setConnectionUserIdError("");
-
-		try {
-			// Check if user ID exists in the database
-			const response = await fetch("/api/check-user-id", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({ userId: connectionUserId.trim() }),
-			});
-
-			const result = await response.json();
-
-			if (result.exists) {
-				// User ID exists - this is good for finding connections
-				return true;
-			} else {
-				setConnectionUserIdError(
-					"User ID not found. Please enter a valid User ID."
-				);
-				return false;
-			}
-		} catch (error) {
-			console.error("Error validating user ID:", error);
-			setConnectionUserIdError("Error validating User ID. Please try again.");
-			return false;
-		} finally {
-			setValidatingConnectionUserId(false);
-		}
-	};
-
 	const generateUsername = async () => {
 		// Check if we have any interests to base the username on
 		const hasInterests = Object.values(formData).some(
@@ -528,79 +477,6 @@ Please respond with ONLY the username, nothing else.`;
 			return false;
 		}
 	};
-
-	const generateTasteProfile = useCallback(async () => {
-		setLoadingTasteProfile(true);
-		try {
-			const resolvedEntities: Record<string, InsightItem[]> = {};
-			const insightMap: Record<string, InsightItem[]> = {};
-
-			// Process Qloo API calls for current interests
-			for (const type of QLOO_TYPES) {
-				const values = formData[type];
-				if (!values || values.length === 0) continue;
-
-				const typeEntities: InsightItem[] = [];
-				const typeInsights: InsightItem[] = [];
-
-				for (const value of values) {
-					const res = await fetch("/api/qloo-search", {
-						method: "POST",
-						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({ query: value, type }),
-					});
-
-					const json = await res.json();
-					const entity = json.data?.results?.[0];
-					if (entity) {
-						typeEntities.push(entity);
-
-						if (entity?.entity_id) {
-							const insightRes = await fetch("/api/qloo-insights", {
-								method: "POST",
-								headers: { "Content-Type": "application/json" },
-								body: JSON.stringify({
-									entityId: entity.entity_id,
-									type,
-									filterType: "brand",
-									take: 5,
-								}),
-							});
-							const insights = await insightRes.json();
-							const insightResults = insights?.data?.results?.entities ?? [];
-							if (Array.isArray(insightResults)) {
-								typeInsights.push(...insightResults);
-							}
-						}
-					}
-				}
-
-				if (typeEntities.length > 0) {
-					resolvedEntities[type] = typeEntities;
-					insightMap[type] = typeInsights;
-				}
-			}
-
-			// Generate AI profile
-			const aiResponse = await fetch("/api/generate-profile", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					interests: formData,
-					insights: insightMap,
-				}),
-			});
-
-			const aiResult = await aiResponse.json();
-			if (aiResult.success && aiResult.data && aiResult.data.headline) {
-				setTasteProfile(aiResult.data);
-			}
-		} catch (error) {
-			console.error("Error generating taste profile:", error);
-		} finally {
-			setLoadingTasteProfile(false);
-		}
-	}, [formData]);
 
 	const handleUserIdUpdate = async () => {
 		if (!newUserId.trim()) {
@@ -718,9 +594,6 @@ Please respond with ONLY the username, nothing else.`;
 
 			if (updateResult.success) {
 				console.log("Profile updated successfully!", updateResult);
-
-				// Refresh taste profile with new interests
-				await generateTasteProfile();
 
 				setShowProfile(false);
 
@@ -1256,150 +1129,6 @@ Please respond with ONLY the username, nothing else.`;
 									</div>
 								</CardContent>
 							</Card>
-
-							{/* Taste Profile Section */}
-							<Card className="bg-slate-800/50 border-slate-700">
-								<CardContent className="p-6">
-									<div className="flex items-center gap-3 mb-4">
-										<div className="w-6 h-6 bg-gradient-to-r from-pink-500 to-orange-500 rounded-full flex items-center justify-center">
-											<span className="text-xs">✨</span>
-										</div>
-										<h2 className="text-lg font-semibold text-slate-200">
-											Your Taste Profile
-										</h2>
-										{loadingTasteProfile && (
-											<div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-										)}
-									</div>
-									<p className="text-slate-400 mb-4">
-										AI-generated insights based on your interests
-									</p>
-
-									<div
-										className="max-h-80 overflow-y-auto pr-2 taste-profile-scroll"
-										style={{
-											scrollbarWidth: "thin",
-											scrollbarColor: "rgb(71 85 105) rgb(30 41 59)",
-										}}
-									>
-										<style
-											dangerouslySetInnerHTML={{
-												__html: `
-												.taste-profile-scroll::-webkit-scrollbar {
-													width: 6px;
-												}
-												.taste-profile-scroll::-webkit-scrollbar-track {
-													background: rgb(30 41 59);
-													border-radius: 3px;
-												}
-												.taste-profile-scroll::-webkit-scrollbar-thumb {
-													background: rgb(71 85 105);
-													border-radius: 3px;
-												}
-												.taste-profile-scroll::-webkit-scrollbar-thumb:hover {
-													background: rgb(100 116 139);
-												}
-											`,
-											}}
-										/>
-										{tasteProfile ? (
-											<div className="space-y-4">
-												{/* Headline */}
-												<div className="p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg border border-blue-500/20">
-													<h3 className="text-blue-400 font-semibold mb-2">
-														Headline
-													</h3>
-													<p className="text-slate-200">
-														{tasteProfile.headline}
-													</p>
-												</div>
-
-												{/* Description */}
-												<div className="p-4 bg-gradient-to-r from-green-500/10 to-teal-500/10 rounded-lg border border-green-500/20">
-													<h3 className="text-green-400 font-semibold mb-2">
-														Description
-													</h3>
-													<p className="text-slate-200">
-														{tasteProfile.description}
-													</p>
-												</div>
-
-												{/* Vibe */}
-												{tasteProfile.vibe && (
-													<div className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
-														<h3 className="text-purple-400 font-semibold mb-2">
-															Vibe
-														</h3>
-														<p className="text-slate-200">
-															{tasteProfile.vibe}
-														</p>
-													</div>
-												)}
-
-												{/* Traits */}
-												{tasteProfile.traits &&
-													Array.isArray(tasteProfile.traits) && (
-														<div className="p-4 bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-lg border border-orange-500/20">
-															<h3 className="text-orange-400 font-semibold mb-2">
-																Key Traits
-															</h3>
-															<div className="flex flex-wrap gap-2">
-																{tasteProfile.traits.map(
-																	(trait: string, index: number) => (
-																		<span
-																			key={index}
-																			className="px-3 py-1 bg-orange-500/20 text-orange-300 rounded-full text-sm"
-																		>
-																			{trait}
-																		</span>
-																	)
-																)}
-															</div>
-														</div>
-													)}
-
-												{/* Compatibility */}
-												{tasteProfile.compatibility && (
-													<div className="p-4 bg-gradient-to-r from-indigo-500/10 to-blue-500/10 rounded-lg border border-indigo-500/20">
-														<h3 className="text-indigo-400 font-semibold mb-2">
-															Compatibility
-														</h3>
-														<p className="text-slate-200">
-															{tasteProfile.compatibility}
-														</p>
-													</div>
-												)}
-											</div>
-										) : (
-											<div className="text-center py-8">
-												<p className="text-slate-400">
-													{loadingTasteProfile
-														? "Generating your taste profile..."
-														: "Add some interests to generate your taste profile"}
-												</p>
-											</div>
-										)}
-									</div>
-
-									{tasteProfile && (
-										<div className="mt-4 flex justify-end">
-											<Button
-												onClick={generateTasteProfile}
-												disabled={loadingTasteProfile}
-												size="sm"
-												className="bg-gradient-to-r from-pink-600 to-orange-600 hover:from-pink-500 hover:to-orange-500 text-white"
-											>
-												{loadingTasteProfile ? (
-													<div className="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-												) : (
-													<span className="mr-2">🔄</span>
-												)}
-												Refresh Profile
-											</Button>
-										</div>
-									)}
-								</CardContent>
-							</Card>
 						</div>
 					</div>
 				</motion.div>
@@ -1696,6 +1425,124 @@ const UserProfileScreen = ({
 	onEditProfile: () => void;
 	onLogout: () => void;
 }) => {
+	const [tasteProfile, setTasteProfile] = useState<AIProfile | null>(null);
+	const [loadingTasteProfile, setLoadingTasteProfile] = useState(false);
+
+	// Load taste profile on mount
+	useEffect(() => {
+		const loadTasteProfile = async () => {
+			try {
+				const response = await fetch("/api/get-taste-profile", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ userId }),
+				});
+				const result = await response.json();
+				if (result.success && result.data) {
+					setTasteProfile(result.data);
+				}
+			} catch (error) {
+				console.error("Error loading taste profile:", error);
+			}
+		};
+
+		if (userId) {
+			loadTasteProfile();
+		}
+	}, [userId]);
+
+	// Generate taste profile function
+	const generateTasteProfile = useCallback(async () => {
+		if (!userProfileData?.interests) {
+			console.log("No interests found for profile generation");
+			return;
+		}
+
+		setLoadingTasteProfile(true);
+		try {
+			const resolvedEntities: Record<string, InsightItem[]> = {};
+			const insightMap: Record<string, InsightItem[]> = {};
+
+			// Process Qloo API calls for current interests
+			for (const [type, values] of Object.entries(userProfileData.interests)) {
+				if (!values || values.length === 0) continue;
+
+				const typeEntities: InsightItem[] = [];
+				const typeInsights: InsightItem[] = [];
+
+				for (const value of values) {
+					const res = await fetch("/api/qloo-search", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ query: value, type }),
+					});
+
+					const json = await res.json();
+					const entity = json.data?.results?.[0];
+					if (entity) {
+						typeEntities.push(entity);
+
+						if (entity?.entity_id) {
+							const insightRes = await fetch("/api/qloo-insights", {
+								method: "POST",
+								headers: { "Content-Type": "application/json" },
+								body: JSON.stringify({
+									entityId: entity.entity_id,
+									type,
+									filterType: "brand",
+									take: 5,
+								}),
+							});
+							const insights = await insightRes.json();
+							const insightResults = insights?.data?.results?.entities ?? [];
+							if (Array.isArray(insightResults)) {
+								typeInsights.push(...insightResults);
+							}
+						}
+					}
+				}
+
+				if (typeEntities.length > 0) {
+					resolvedEntities[type] = typeEntities;
+					insightMap[type] = typeInsights;
+				}
+			}
+
+			// Generate AI profile
+			const aiResponse = await fetch("/api/generate-profile", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					interests: userProfileData.interests,
+					insights: insightMap,
+				}),
+			});
+
+			const aiResult = await aiResponse.json();
+			if (aiResult.success && aiResult.data && aiResult.data.headline) {
+				setTasteProfile(aiResult.data);
+				
+				// Save to database
+				const saveResponse = await fetch("/api/save-taste-profile", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						userId,
+						tasteProfile: aiResult.data,
+					}),
+				});
+				
+				const saveResult = await saveResponse.json();
+				if (!saveResult.success) {
+					console.error("Failed to save taste profile:", saveResult.error);
+				}
+			}
+		} catch (error) {
+			console.error("Error generating taste profile:", error);
+		} finally {
+			setLoadingTasteProfile(false);
+		}
+	}, [userProfileData?.interests, userId]);
 	return (
 		<div className="h-full flex flex-col relative z-10 p-6">
 			<motion.div
@@ -1796,6 +1643,132 @@ const UserProfileScreen = ({
 											</div>
 										</div>
 									)}
+
+								{/* Taste Profile Section */}
+								<div className="bg-slate-700/50 p-6 rounded-lg border border-slate-600">
+									<div className="flex items-center justify-between mb-4">
+										<div className="flex items-center gap-3">
+											<div className="w-6 h-6 bg-gradient-to-r from-pink-500 to-orange-500 rounded-full flex items-center justify-center">
+												<span className="text-xs">✨</span>
+											</div>
+											<h3 className="text-xl font-semibold text-slate-200">
+												Your Taste Profile
+											</h3>
+											{loadingTasteProfile && (
+												<div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+											)}
+										</div>
+										{tasteProfile && (
+											<Button
+												onClick={generateTasteProfile}
+												disabled={loadingTasteProfile}
+												size="sm"
+												className="bg-gradient-to-r from-pink-600 to-orange-600 hover:from-pink-500 hover:to-orange-500 text-white"
+											>
+												{loadingTasteProfile ? (
+													<div className="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+												) : (
+													<span className="mr-2">🔄</span>
+												)}
+												Refresh
+											</Button>
+										)}
+									</div>
+									
+									<div
+										className="max-h-80 overflow-y-auto pr-2 taste-profile-scroll"
+										style={{
+											scrollbarWidth: "thin",
+											scrollbarColor: "rgb(71 85 105) rgb(30 41 59)",
+										}}
+									>
+										<style
+											dangerouslySetInnerHTML={{
+												__html: `
+												.taste-profile-scroll::-webkit-scrollbar {
+													width: 6px;
+												}
+												.taste-profile-scroll::-webkit-scrollbar-track {
+													background: rgb(30 41 59);
+													border-radius: 3px;
+												}
+												.taste-profile-scroll::-webkit-scrollbar-thumb {
+													background: rgb(71 85 105);
+													border-radius: 3px;
+												}
+												.taste-profile-scroll::-webkit-scrollbar-thumb:hover {
+													background: rgb(100 116 139);
+												}
+											`,
+											}}
+										/>
+										{tasteProfile ? (
+											<div className="space-y-4">
+												{/* Headline */}
+												<div className="p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg border border-blue-500/20">
+													<h4 className="text-blue-400 font-semibold mb-2">Headline</h4>
+													<p className="text-slate-200">{tasteProfile.headline}</p>
+												</div>
+
+												{/* Description */}
+												<div className="p-4 bg-gradient-to-r from-green-500/10 to-teal-500/10 rounded-lg border border-green-500/20">
+													<h4 className="text-green-400 font-semibold mb-2">Description</h4>
+													<p className="text-slate-200">{tasteProfile.description}</p>
+												</div>
+
+												{/* Vibe */}
+												{tasteProfile.vibe && (
+													<div className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
+														<h4 className="text-purple-400 font-semibold mb-2">Vibe</h4>
+														<p className="text-slate-200">{tasteProfile.vibe}</p>
+													</div>
+												)}
+
+												{/* Traits */}
+												{tasteProfile.traits && Array.isArray(tasteProfile.traits) && (
+													<div className="p-4 bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-lg border border-orange-500/20">
+														<h4 className="text-orange-400 font-semibold mb-2">Key Traits</h4>
+														<div className="flex flex-wrap gap-2">
+															{tasteProfile.traits.map((trait: string, index: number) => (
+																<span
+																	key={index}
+																	className="px-3 py-1 bg-orange-500/20 text-orange-300 rounded-full text-sm"
+																>
+																	{trait}
+																</span>
+															))}
+														</div>
+													</div>
+												)}
+
+												{/* Compatibility */}
+												{tasteProfile.compatibility && (
+													<div className="p-4 bg-gradient-to-r from-indigo-500/10 to-blue-500/10 rounded-lg border border-indigo-500/20">
+														<h4 className="text-indigo-400 font-semibold mb-2">Compatibility</h4>
+														<p className="text-slate-200">{tasteProfile.compatibility}</p>
+													</div>
+												)}
+											</div>
+										) : (
+											<div className="text-center py-8">
+												<p className="text-slate-400 mb-4">
+													{loadingTasteProfile
+														? "Generating your taste profile..."
+														: "Your taste profile will appear here once generated"}
+												</p>
+												{!loadingTasteProfile && userProfileData?.interests && Object.keys(userProfileData.interests).length > 0 && (
+													<Button
+														onClick={generateTasteProfile}
+														className="bg-gradient-to-r from-pink-600 to-orange-600 hover:from-pink-500 hover:to-orange-500 text-white"
+													>
+														<span className="mr-2">✨</span>
+														Generate Taste Profile
+													</Button>
+												)}
+											</div>
+										)}
+									</div>
+								</div>
 							</div>
 
 							{/* Action Buttons */}

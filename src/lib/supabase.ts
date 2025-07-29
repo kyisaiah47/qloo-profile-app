@@ -23,6 +23,12 @@ export interface UserProfile {
 	interests: Record<string, string[]>;
 	insights: Record<string, InsightItem[]>;
 	profile_completed: boolean;
+	taste_profile_headline?: string;
+	taste_profile_description?: string;
+	taste_profile_vibe?: string;
+	taste_profile_traits?: string[];
+	taste_profile_compatibility?: string;
+	taste_profile_generated_at?: string;
 }
 
 export interface UserInterest {
