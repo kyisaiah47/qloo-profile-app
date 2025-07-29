@@ -270,6 +270,12 @@ export default function ProfileForm() {
 		console.log("=== END DEBUG ===");
 	}, [insightResults]);
 
+	// Debug useEffect to track formData changes
+	useEffect(() => {
+		console.log("🔧 FormData changed:", formData);
+		console.log("🔧 ShowProfile:", showProfile);
+	}, [formData, showProfile]);
+
 	// Safe wrapper for setInsightResults to prevent error objects from being set
 	const safeSetInsightResults = (
 		data: Record<string, InsightItem[]> & { aiProfile?: AIProfile }
@@ -310,6 +316,7 @@ export default function ProfileForm() {
 	};
 
 	const handleChange = (type: string, values: string[]) => {
+		console.log("🔧 HandleChange called with type:", type, "values:", values);
 		setFormData({ ...formData, [type]: values });
 	};
 
@@ -870,8 +877,43 @@ Please respond with ONLY the username, nothing else.`;
 					loadingMatches={loadingMatches}
 					matches={matches}
 					onEditProfile={() => {
+						console.log("🔧 Edit Profile clicked");
+						console.log("🔧 User Profile Data:", userProfileData);
 						if (userProfileData?.interests) {
-							setFormData(userProfileData.interests);
+							console.log(
+								"🔧 Setting form data with interests:",
+								userProfileData.interests
+							);
+
+							// Handle malformed interests data where categories might be undefined
+							const cleanedInterests: Record<string, string[]> = {};
+
+							// If there's an 'undefined' key, try to distribute the values
+							if (
+								userProfileData.interests.undefined &&
+								Array.isArray(userProfileData.interests.undefined)
+							) {
+								console.log(
+									"🔧 Found undefined key, distributing values:",
+									userProfileData.interests.undefined
+								);
+								// For now, put them in 'artist' category as a fallback
+								cleanedInterests.artist = userProfileData.interests.undefined;
+							}
+
+							// Copy over any properly categorized interests
+							Object.entries(userProfileData.interests).forEach(
+								([key, values]) => {
+									if (key !== "undefined" && key && QLOO_TYPES.includes(key)) {
+										cleanedInterests[key] = values;
+									}
+								}
+							);
+
+							console.log("🔧 Cleaned interests:", cleanedInterests);
+							setFormData(cleanedInterests);
+						} else {
+							console.log("🔧 No interests found in user profile data");
 						}
 						setShowUserProfile(false);
 						setShowProfile(true);
