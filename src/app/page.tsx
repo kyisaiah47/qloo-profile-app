@@ -2113,6 +2113,33 @@ const ProfileFormScreen = ({
 								{/* Username and Contact Input for Finding Connections */}
 								<div className="mb-4 max-w-2xl mx-auto">
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+										{/* Contact Field */}
+										<div>
+											<Label
+												htmlFor="contactInfo"
+												className="text-sm font-medium text-slate-300 mb-2 block"
+											>
+												Contact Info (Email or Phone)
+											</Label>
+											<Input
+												id="contactInfo"
+												type="text"
+												placeholder="email@example.com or (555) 123-4567"
+												value={contactInfo}
+												onChange={(e) => {
+													setContactInfo(e.target.value);
+													setContactError(""); // Clear error when typing
+												}}
+												className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+												disabled={isLoading || generatingUsername}
+											/>
+											{contactError && (
+												<p className="text-red-400 text-xs mt-1">
+													{contactError}
+												</p>
+											)}
+										</div>
+
 										{/* Username Field */}
 										<div>
 											<Label
@@ -2156,33 +2183,6 @@ const ProfileFormScreen = ({
 											{connectionUserIdError && (
 												<p className="text-red-400 text-xs mt-1">
 													{connectionUserIdError}
-												</p>
-											)}
-										</div>
-
-										{/* Contact Field */}
-										<div>
-											<Label
-												htmlFor="contactInfo"
-												className="text-sm font-medium text-slate-300 mb-2 block"
-											>
-												Contact Info (Email or Phone)
-											</Label>
-											<Input
-												id="contactInfo"
-												type="text"
-												placeholder="email@example.com or (555) 123-4567"
-												value={contactInfo}
-												onChange={(e) => {
-													setContactInfo(e.target.value);
-													setContactError(""); // Clear error when typing
-												}}
-												className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-												disabled={isLoading || generatingUsername}
-											/>
-											{contactError && (
-												<p className="text-red-400 text-xs mt-1">
-													{contactError}
 												</p>
 											)}
 										</div>
