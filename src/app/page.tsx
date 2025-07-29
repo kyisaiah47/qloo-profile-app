@@ -696,8 +696,8 @@ Please respond with ONLY the username, nothing else.`;
 			}
 
 			console.log("user_id", userId);
-			// Update existing profile
-			const updateResponse = await fetch("/api/save-profile", {
+			// Update existing profile using the update endpoint
+			const updateResponse = await fetch("/api/update-user-profile", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
@@ -1592,8 +1592,10 @@ const UserProfileScreen = ({
 	);
 
 	// Load current user interests into formData
+	const interestsLoadedRef = useRef(false);
+
 	useEffect(() => {
-		if (userProfileData?.profile?.interests) {
+		if (userProfileData?.profile?.interests && !interestsLoadedRef.current) {
 			console.log(
 				"Loading user interests into formData:",
 				userProfileData.profile.interests
@@ -1616,21 +1618,18 @@ const UserProfileScreen = ({
 				}
 			);
 
-			// Only update if there are actual changes
-			const hasChanges =
-				JSON.stringify(cleanedInterests) !== JSON.stringify(formData);
-			if (hasChanges) {
-				console.log(
-					"Updating formData with cleaned interests:",
-					cleanedInterests
-				);
-				// We need to call handleChange for each type to properly update the parent state
-				Object.entries(cleanedInterests).forEach(([type, values]) => {
-					handleChange(type, values);
-				});
-			}
+			console.log(
+				"Updating formData with cleaned interests:",
+				cleanedInterests
+			);
+			// We need to call handleChange for each type to properly update the parent state
+			Object.entries(cleanedInterests).forEach(([type, values]) => {
+				handleChange(type, values);
+			});
+
+			interestsLoadedRef.current = true;
 		}
-	}, [userProfileData?.profile?.interests, handleChange, formData]);
+	}, [userProfileData?.profile?.interests, handleChange]);
 
 	// Handle finding matches within UserProfileScreen
 	const handleFindMatches = async () => {
