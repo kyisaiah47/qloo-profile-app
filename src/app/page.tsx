@@ -321,10 +321,10 @@ export default function ProfileForm() {
 		setInsightResults(data);
 	};
 
-	const handleChange = (type: string, values: string[]) => {
+	const handleChange = useCallback((type: string, values: string[]) => {
 		console.log("🔧 HandleChange called with type:", type, "values:", values);
-		setFormData({ ...formData, [type]: values });
-	};
+		setFormData((prevFormData) => ({ ...prevFormData, [type]: values }));
+	}, []);
 
 	const handleLogin = async () => {
 		if (!loginUserId.trim()) {
@@ -1522,6 +1522,7 @@ interface UserProfileData {
 		bio?: string;
 		ai_profile?: string;
 		emoji?: string;
+		interests?: Record<string, string[]>;
 	};
 	interests: Record<string, string[]>;
 	insights: InsightItem[];
@@ -1569,30 +1570,28 @@ const UserProfileScreen = ({
 
 	// Load current user interests into formData
 	useEffect(() => {
-		if (userProfileData?.interests) {
+		if (userProfileData?.profile?.interests) {
 			console.log(
 				"Loading user interests into formData:",
-				userProfileData.interests
+				userProfileData.profile.interests
 			);
 
 			// Handle malformed interests data where categories might be undefined
 			const cleanedInterests: Record<string, string[]> = {};
 
-			// If there's an 'undefined' key, try to distribute the values
-			if (
-				userProfileData.interests.undefined &&
-				Array.isArray(userProfileData.interests.undefined)
-			) {
-				// For now, put them in 'artist' category as a fallback
-				cleanedInterests.artist = userProfileData.interests.undefined;
-			}
-
 			// Copy over any properly categorized interests
-			Object.entries(userProfileData.interests).forEach(([key, values]) => {
-				if (key !== "undefined" && key && QLOO_TYPES.includes(key)) {
-					cleanedInterests[key] = values;
+			Object.entries(userProfileData.profile.interests).forEach(
+				([key, values]) => {
+					if (
+						key !== "undefined" &&
+						key &&
+						QLOO_TYPES.includes(key) &&
+						Array.isArray(values)
+					) {
+						cleanedInterests[key] = values;
+					}
 				}
-			});
+			);
 
 			// Only update if there are actual changes
 			const hasChanges =
@@ -1608,7 +1607,7 @@ const UserProfileScreen = ({
 				});
 			}
 		}
-	}, [userProfileData?.interests, handleChange, formData]);
+	}, [userProfileData?.profile?.interests, handleChange, formData]);
 
 	// Handle finding matches within UserProfileScreen
 	const handleFindMatches = async () => {
@@ -1645,7 +1644,7 @@ const UserProfileScreen = ({
 
 	// Generate taste profile function
 	const generateTasteProfile = useCallback(async () => {
-		if (!userProfileData?.interests) {
+		if (!userProfileData?.profile?.interests) {
 			console.log("No interests found for profile generation");
 			return;
 		}
@@ -1656,7 +1655,9 @@ const UserProfileScreen = ({
 			const insightMap: Record<string, InsightItem[]> = {};
 
 			// Process Qloo API calls for current interests
-			for (const [type, values] of Object.entries(userProfileData.interests)) {
+			for (const [type, values] of Object.entries(
+				userProfileData.profile.interests
+			)) {
 				if (!values || values.length === 0) continue;
 
 				const typeEntities: InsightItem[] = [];
@@ -1705,7 +1706,7 @@ const UserProfileScreen = ({
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
-					interests: userProfileData.interests,
+					interests: userProfileData.profile.interests,
 					insights: insightMap,
 				}),
 			});
@@ -1734,7 +1735,7 @@ const UserProfileScreen = ({
 		} finally {
 			setLoadingTasteProfile(false);
 		}
-	}, [userProfileData?.interests, userId]);
+	}, [userProfileData?.profile?.interests, userId]);
 	return (
 		<div className="h-screen flex flex-col relative z-10 p-6">
 			<motion.div
@@ -2052,9 +2053,9 @@ const UserProfileScreen = ({
 																	: "Your taste profile will appear here once generated"}
 															</p>
 															{!loadingTasteProfile &&
-																userProfileData?.interests &&
-																Object.keys(userProfileData.interests).length >
-																	0 && (
+																userProfileData?.profile?.interests &&
+																Object.keys(userProfileData.profile.interests)
+																	.length > 0 && (
 																	<Button
 																		onClick={generateTasteProfile}
 																		className="bg-gradient-to-r from-pink-600 to-orange-600 hover:from-pink-500 hover:to-orange-500 text-white"
