@@ -1598,164 +1598,157 @@ const UserProfileScreen = ({
 							transition={{ delay: 0.4, duration: 0.6 }}
 							className="flex-1 flex flex-col min-h-0"
 						>
-							{showMatches ? (
-								/* Matches View */
-								<>
-									<div className="flex items-center justify-between mb-6">
-										<h2 className="text-2xl font-bold text-slate-200">
-											Your Matches 🤝
-										</h2>
-										<div className="text-slate-400 text-sm">
-											{matches.length} matches found
+							{/* Scrollable Content Area */}
+							<div className="flex-1 overflow-y-auto pr-2 mb-4">
+								{showMatches ? (
+									/* Matches View */
+									<>
+										<div className="flex items-center justify-between mb-6">
+											<h2 className="text-2xl font-bold text-slate-200">
+												Your Matches 🤝
+											</h2>
+											<div className="text-slate-400 text-sm">
+												{matches.length} matches found
+											</div>
 										</div>
-									</div>
 
-									<div className="flex-1 overflow-y-auto pr-2 mb-6">
-										{matches.length > 0 ? (
-											<div className="space-y-4">
-												{matches.map((match, index) => (
-													<div
-														key={index}
-														className="p-6 bg-slate-700/50 rounded-lg border border-slate-600 hover:border-slate-500 transition-all duration-200"
-													>
-														<div className="flex items-center justify-between mb-4">
-															<div className="flex items-center gap-3">
-																<div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-lg">
-																	👤
-																</div>
-																<div>
-																	<h3 className="font-semibold text-slate-200">
-																		{match.user.name || match.user.user_id}
-																	</h3>
-																	<p className="text-slate-400 text-sm">
-																		ID: {match.user.user_id}
-																	</p>
-																</div>
-															</div>
-															<div className="text-right">
-																<div className="text-lg font-bold text-green-400">
-																	{Math.round(match.matchScore * 100)}%
-																</div>
-																<div className="text-xs text-slate-400">
-																	compatibility
-																</div>
-															</div>
-														</div>
-
-														{match.sharedFields &&
-															match.sharedFields.length > 0 && (
-																<div className="space-y-2">
-																	<h4 className="text-sm font-medium text-slate-300">
-																		Shared Interests
-																	</h4>
-																	<div className="flex flex-wrap gap-2">
-																		{match.sharedFields
-																			.slice(0, 6)
-																			.map((interest: string, idx: number) => (
-																				<span
-																					key={idx}
-																					className="px-2 py-1 bg-blue-600/20 text-blue-300 rounded-full text-xs border border-blue-500/30"
-																				>
-																					{interest}
-																				</span>
-																			))}
-																		{match.sharedFields.length > 6 && (
-																			<span className="px-2 py-1 bg-slate-600 text-slate-300 rounded-full text-xs">
-																				+{match.sharedFields.length - 6} more
-																			</span>
-																		)}
+										<div className="flex-1 overflow-y-auto pr-2 mb-6">
+											{matches.length > 0 ? (
+												<div className="space-y-4">
+													{matches.map((match, index) => (
+														<div
+															key={index}
+															className="p-6 rounded-lg border border-slate-600/50 hover:border-slate-500 transition-all duration-200"
+														>
+															<div className="flex items-center justify-between mb-4">
+																<div className="flex items-center gap-3">
+																	<div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-lg">
+																		👤
+																	</div>
+																	<div>
+																		<h3 className="font-semibold text-slate-200">
+																			{match.user.name || match.user.user_id}
+																		</h3>
+																		<p className="text-slate-400 text-sm">
+																			ID: {match.user.user_id}
+																		</p>
 																	</div>
 																</div>
-															)}
+																<div className="text-right">
+																	<div className="text-lg font-bold text-green-400">
+																		{Math.round(match.matchScore * 100)}%
+																	</div>
+																	<div className="text-xs text-slate-400">
+																		compatibility
+																	</div>
+																</div>
+															</div>
+
+															{match.sharedFields &&
+																match.sharedFields.length > 0 && (
+																	<div className="space-y-2">
+																		<h4 className="text-sm font-medium text-slate-300">
+																			Shared Interests
+																		</h4>
+																		<div className="flex flex-wrap gap-2">
+																			{match.sharedFields
+																				.slice(0, 6)
+																				.map(
+																					(interest: string, idx: number) => (
+																						<span
+																							key={idx}
+																							className="px-2 py-1 bg-blue-600/20 text-blue-300 rounded-full text-xs border border-blue-500/30"
+																						>
+																							{interest}
+																						</span>
+																					)
+																				)}
+																			{match.sharedFields.length > 6 && (
+																				<span className="px-2 py-1 bg-slate-600 text-slate-300 rounded-full text-xs">
+																					+{match.sharedFields.length - 6} more
+																				</span>
+																			)}
+																		</div>
+																	</div>
+																)}
+														</div>
+													))}
+												</div>
+											) : (
+												<div className="flex-1 flex items-center justify-center">
+													<div className="text-center">
+														<div className="text-6xl mb-4">🔍</div>
+														<h3 className="text-xl font-semibold text-slate-200 mb-2">
+															No matches found
+														</h3>
+														<p className="text-slate-400">
+															Try adding more interests to find better matches
+														</p>
 													</div>
-												))}
-											</div>
-										) : (
-											<div className="flex-1 flex items-center justify-center">
-												<div className="text-center">
-													<div className="text-6xl mb-4">🔍</div>
-													<h3 className="text-xl font-semibold text-slate-200 mb-2">
-														No matches found
+												</div>
+											)}
+										</div>
+									</>
+								) : (
+									/* Profile View */
+									<>
+										{/* Profile Info */}
+										<div className="space-y-6 flex-1 flex flex-col min-h-0 mb-6">
+											{userProfileData?.profile?.ai_profile && (
+												<div className="p-6 rounded-lg border border-slate-600/50">
+													<h3 className="text-xl font-semibold text-slate-200 mb-3">
+														Your Vibe
 													</h3>
-													<p className="text-slate-400">
-														Try adding more interests to find better matches
+													<p className="text-slate-300 leading-relaxed">
+														{
+															JSON.parse(userProfileData.profile.ai_profile)
+																.description
+														}
 													</p>
 												</div>
-											</div>
-										)}
-									</div>
+											)}
 
-									{/* Action Button */}
-									<div className="flex gap-4 pt-4 border-t border-slate-700">
-										<Button
-											onClick={() => setShowMatches(false)}
-											className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-lg font-semibold text-white"
-										>
-											<span className="mr-2">←</span>
-											Go to Profile
-										</Button>
-									</div>
-								</>
-							) : (
-								/* Profile View */
-								<>
-									{/* Profile Info */}
-									<div className="space-y-6 flex-1 flex flex-col min-h-0 mb-6">
-										{userProfileData?.profile?.ai_profile && (
-											<div className="bg-slate-700/50 p-6 rounded-lg border border-slate-600">
-												<h3 className="text-xl font-semibold text-slate-200 mb-3">
-													Your Vibe
-												</h3>
-												<p className="text-slate-300 leading-relaxed">
-													{
-														JSON.parse(userProfileData.profile.ai_profile)
-															.description
-													}
-												</p>
-											</div>
-										)}
-
-										{/* Taste Profile Section */}
-										<div className="bg-slate-700/50 p-6 rounded-lg border border-slate-600 flex-1 flex flex-col">
-											<div className="flex items-center justify-between mb-4">
-												<div className="flex items-center gap-3">
-													<div className="w-6 h-6 bg-gradient-to-r from-pink-500 to-orange-500 rounded-full flex items-center justify-center">
-														<span className="text-xs">✨</span>
+											{/* Taste Profile Section */}
+											<div className="p-6 rounded-lg flex-1 flex flex-col">
+												<div className="flex items-center justify-between mb-4">
+													<div className="flex items-center gap-3">
+														<div className="w-6 h-6 bg-gradient-to-r from-pink-500 to-orange-500 rounded-full flex items-center justify-center">
+															<span className="text-xs">✨</span>
+														</div>
+														<h3 className="text-xl font-semibold text-slate-200">
+															Your Taste Profile
+														</h3>
+														{loadingTasteProfile && (
+															<div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+														)}
 													</div>
-													<h3 className="text-xl font-semibold text-slate-200">
-														Your Taste Profile
-													</h3>
-													{loadingTasteProfile && (
-														<div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+													{tasteProfile && (
+														<Button
+															onClick={generateTasteProfile}
+															disabled={loadingTasteProfile}
+															size="sm"
+															className="bg-gradient-to-r from-pink-600 to-orange-600 hover:from-pink-500 hover:to-orange-500 text-white"
+														>
+															{loadingTasteProfile ? (
+																<div className="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+															) : (
+																<span className="mr-2">🔄</span>
+															)}
+															Refresh
+														</Button>
 													)}
 												</div>
-												{tasteProfile && (
-													<Button
-														onClick={generateTasteProfile}
-														disabled={loadingTasteProfile}
-														size="sm"
-														className="bg-gradient-to-r from-pink-600 to-orange-600 hover:from-pink-500 hover:to-orange-500 text-white"
-													>
-														{loadingTasteProfile ? (
-															<div className="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-														) : (
-															<span className="mr-2">🔄</span>
-														)}
-														Refresh
-													</Button>
-												)}
-											</div>
 
-											<div
-												className="flex-1 overflow-y-auto pr-2 taste-profile-scroll"
-												style={{
-													scrollbarWidth: "thin",
-													scrollbarColor: "rgb(71 85 105) rgb(30 41 59)",
-												}}
-											>
-												<style
-													dangerouslySetInnerHTML={{
-														__html: `
+												<div
+													className="flex-1 overflow-y-auto pr-2 taste-profile-scroll"
+													style={{
+														scrollbarWidth: "thin",
+														scrollbarColor: "rgb(71 85 105) rgb(30 41 59)",
+													}}
+												>
+													<style
+														dangerouslySetInnerHTML={{
+															__html: `
 													.taste-profile-scroll::-webkit-scrollbar {
 														width: 6px;
 													}
@@ -1771,103 +1764,116 @@ const UserProfileScreen = ({
 														background: rgb(100 116 139);
 													}
 												`,
-													}}
-												/>
-												{tasteProfile ? (
-													<div className="space-y-4">
-														{/* Headline */}
-														<div className="p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg border border-blue-500/20">
-															<h4 className="text-blue-400 font-semibold mb-2">
-																Headline
-															</h4>
-															<p className="text-slate-200">
-																{tasteProfile.headline}
-															</p>
-														</div>
-
-														{/* Description */}
-														<div className="p-4 bg-gradient-to-r from-green-500/10 to-teal-500/10 rounded-lg border border-green-500/20">
-															<h4 className="text-green-400 font-semibold mb-2">
-																Description
-															</h4>
-															<p className="text-slate-200">
-																{tasteProfile.description}
-															</p>
-														</div>
-
-														{/* Vibe */}
-														{tasteProfile.vibe && (
-															<div className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
-																<h4 className="text-purple-400 font-semibold mb-2">
-																	Vibe
+														}}
+													/>
+													{tasteProfile ? (
+														<div className="space-y-4">
+															{/* Headline */}
+															<div className="p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg border border-blue-500/20">
+																<h4 className="text-blue-400 font-semibold mb-2">
+																	Headline
 																</h4>
 																<p className="text-slate-200">
-																	{tasteProfile.vibe}
+																	{tasteProfile.headline}
 																</p>
 															</div>
-														)}
 
-														{/* Traits */}
-														{tasteProfile.traits &&
-															Array.isArray(tasteProfile.traits) && (
-																<div className="p-4 bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-lg border border-orange-500/20">
-																	<h4 className="text-orange-400 font-semibold mb-2">
-																		Key Traits
+															{/* Description */}
+															<div className="p-4 bg-gradient-to-r from-green-500/10 to-teal-500/10 rounded-lg border border-green-500/20">
+																<h4 className="text-green-400 font-semibold mb-2">
+																	Description
+																</h4>
+																<p className="text-slate-200">
+																	{tasteProfile.description}
+																</p>
+															</div>
+
+															{/* Vibe */}
+															{tasteProfile.vibe && (
+																<div className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
+																	<h4 className="text-purple-400 font-semibold mb-2">
+																		Vibe
 																	</h4>
-																	<div className="flex flex-wrap gap-2">
-																		{tasteProfile.traits.map(
-																			(trait: string, index: number) => (
-																				<span
-																					key={index}
-																					className="px-3 py-1 bg-orange-500/20 text-orange-300 rounded-full text-sm"
-																				>
-																					{trait}
-																				</span>
-																			)
-																		)}
-																	</div>
+																	<p className="text-slate-200">
+																		{tasteProfile.vibe}
+																	</p>
 																</div>
 															)}
 
-														{/* Compatibility */}
-														{tasteProfile.compatibility && (
-															<div className="p-4 bg-gradient-to-r from-indigo-500/10 to-blue-500/10 rounded-lg border border-indigo-500/20">
-																<h4 className="text-indigo-400 font-semibold mb-2">
-																	Compatibility
-																</h4>
-																<p className="text-slate-200">
-																	{tasteProfile.compatibility}
-																</p>
-															</div>
-														)}
-													</div>
-												) : (
-													<div className="text-center py-8">
-														<p className="text-slate-400 mb-4">
-															{loadingTasteProfile
-																? "Generating your taste profile..."
-																: "Your taste profile will appear here once generated"}
-														</p>
-														{!loadingTasteProfile &&
-															userProfileData?.interests &&
-															Object.keys(userProfileData.interests).length >
-																0 && (
-																<Button
-																	onClick={generateTasteProfile}
-																	className="bg-gradient-to-r from-pink-600 to-orange-600 hover:from-pink-500 hover:to-orange-500 text-white"
-																>
-																	<span className="mr-2">✨</span>
-																	Generate Taste Profile
-																</Button>
+															{/* Traits */}
+															{tasteProfile.traits &&
+																Array.isArray(tasteProfile.traits) && (
+																	<div className="p-4 bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-lg border border-orange-500/20">
+																		<h4 className="text-orange-400 font-semibold mb-2">
+																			Key Traits
+																		</h4>
+																		<div className="flex flex-wrap gap-2">
+																			{tasteProfile.traits.map(
+																				(trait: string, index: number) => (
+																					<span
+																						key={index}
+																						className="px-3 py-1 bg-orange-500/20 text-orange-300 rounded-full text-sm"
+																					>
+																						{trait}
+																					</span>
+																				)
+																			)}
+																		</div>
+																	</div>
+																)}
+
+															{/* Compatibility */}
+															{tasteProfile.compatibility && (
+																<div className="p-4 bg-gradient-to-r from-indigo-500/10 to-blue-500/10 rounded-lg border border-indigo-500/20">
+																	<h4 className="text-indigo-400 font-semibold mb-2">
+																		Compatibility
+																	</h4>
+																	<p className="text-slate-200">
+																		{tasteProfile.compatibility}
+																	</p>
+																</div>
 															)}
-													</div>
-												)}
+														</div>
+													) : (
+														<div className="text-center py-8">
+															<p className="text-slate-400 mb-4">
+																{loadingTasteProfile
+																	? "Generating your taste profile..."
+																	: "Your taste profile will appear here once generated"}
+															</p>
+															{!loadingTasteProfile &&
+																userProfileData?.interests &&
+																Object.keys(userProfileData.interests).length >
+																	0 && (
+																	<Button
+																		onClick={generateTasteProfile}
+																		className="bg-gradient-to-r from-pink-600 to-orange-600 hover:from-pink-500 hover:to-orange-500 text-white"
+																	>
+																		<span className="mr-2">✨</span>
+																		Generate Taste Profile
+																	</Button>
+																)}
+														</div>
+													)}
+												</div>
 											</div>
 										</div>
-									</div>
+									</>
+								)}
+							</div>
 
-									{/* Action Buttons */}
-									<div className="flex gap-4 pt-4 border-t border-slate-700">
+							{/* Fixed Action Buttons */}
+							<div className="flex gap-4 pt-4 border-t border-slate-700 flex-shrink-0">
+								{showMatches ? (
+									<Button
+										onClick={() => setShowMatches(false)}
+										className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-lg font-semibold text-white"
+									>
+										<span className="mr-2">←</span>
+										Go to Profile
+									</Button>
+								) : (
+									<>
 										<Button
 											onClick={handleFindMatches}
 											disabled={loadingMatches}
@@ -1889,9 +1895,9 @@ const UserProfileScreen = ({
 											<span className="mr-2">✏️</span>
 											Edit Profile
 										</Button>
-									</div>
-								</>
-							)}
+									</>
+								)}
+							</div>
 						</motion.div>
 					</CardContent>
 				</Card>
