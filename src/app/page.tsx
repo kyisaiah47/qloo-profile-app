@@ -953,177 +953,146 @@ Please respond with ONLY the username, nothing else.`;
 					{/* Content */}
 					<div className="flex-1 overflow-y-auto p-4 min-h-0">
 						<div className="max-w-6xl mx-auto space-y-6 pb-4">
-							{/* Personal Info Section */}
+							{/* Combined Profile Management Section */}
 							<Card className="bg-slate-800/50 border-slate-700">
 								<CardContent className="p-6">
-									<div className="flex items-center gap-3 mb-4">
+									<div className="flex items-center gap-3 mb-6">
 										<div className="w-6 h-6 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
 											<span className="text-xs">👤</span>
 										</div>
 										<h2 className="text-lg font-semibold text-slate-200 font-heading">
-											Personal Information
+											Profile Management
 										</h2>
 									</div>
 
-									<div className="grid md:grid-cols-2 gap-6">
-										{/* User ID Section */}
-										<div className="space-y-3">
-											<h3 className="text-base font-medium text-slate-200 font-heading">
-												User ID
-											</h3>
-											{editingUserId ? (
-												<div className="space-y-3">
-													<div>
-														<Label
-															htmlFor="user-id-input"
-															className="text-slate-300 mb-2"
-														>
-															New User ID
-														</Label>
-														<Input
-															id="user-id-input"
-															value={newUserId}
-															onChange={(e) => {
-																setNewUserId(e.target.value);
-																setUserIdError("");
-															}}
-															placeholder="Enter your new User ID"
-															className="bg-slate-700 border-slate-600 text-slate-200 focus:border-blue-500"
-														/>
-														{userIdError && (
-															<p className="text-red-400 text-sm">
-																{userIdError}
-															</p>
-														)}
-													</div>
-													<div className="flex gap-2">
-														<Button
-															onClick={handleUserIdUpdate}
-															size="sm"
-															className="bg-blue-600 hover:bg-blue-500 text-white"
-														>
-															Save Changes
-														</Button>
-														<Button
-															onClick={() => {
-																setEditingUserId(false);
-																setNewUserId("");
-																setUserIdError("");
-															}}
-															size="sm"
-															className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100"
-														>
-															Cancel
-														</Button>
-													</div>
-												</div>
-											) : (
-												<div className="space-y-3">
-													<div className="p-4 bg-slate-700/50 rounded-lg border border-slate-600">
-														<p className="text-slate-300 font-mono text-lg">
-															{userId}
-														</p>
-														<p className="text-sm text-slate-400 mt-1">
-															This is your unique identifier
-														</p>
-													</div>
-												</div>
-											)}
-										</div>
-
-										{/* Personal Blurb Section */}
-										<div className="space-y-3">
-											<h3 className="text-base font-medium text-slate-200 font-heading">
-												Personal Blurb
+									{/* Personal Information Section */}
+									<div className="space-y-6">
+										<div>
+											<h3 className="text-base font-medium text-slate-200 font-heading mb-4">
+												Personal Information
 											</h3>
 											<div className="space-y-3">
-												<Label
-													htmlFor="personal-blurb"
-													className="text-slate-300"
-												>
-													Tell others about yourself
-												</Label>
-												<textarea
-													id="personal-blurb"
-													placeholder="Write a short description about yourself, your interests, or what you're looking for in connections..."
-													className="w-full h-24 p-3 bg-slate-700 border border-slate-600 rounded-lg text-slate-200 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none transition-all"
-												/>
-												<div className="flex justify-between items-center">
-													<p className="text-xs text-slate-400">
-														Max 280 characters
-													</p>
-													<Button
-														size="sm"
-														className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white"
-													>
-														Save Blurb
-													</Button>
+												{editingUserId ? (
+													<div className="space-y-3">
+														<div>
+															<Label
+																htmlFor="user-id-input"
+																className="text-slate-300 mb-2"
+															>
+																New User ID
+															</Label>
+															<Input
+																id="user-id-input"
+																value={newUserId}
+																onChange={(e) => {
+																	setNewUserId(e.target.value);
+																	setUserIdError("");
+																}}
+																placeholder="Enter your new User ID"
+																className="bg-slate-700 border-slate-600 text-slate-200 focus:border-blue-500"
+															/>
+															{userIdError && (
+																<p className="text-red-400 text-sm">
+																	{userIdError}
+																</p>
+															)}
+														</div>
+														<div className="flex gap-2">
+															<Button
+																onClick={handleUserIdUpdate}
+																size="sm"
+																className="bg-blue-600 hover:bg-blue-500 text-white"
+															>
+																Save Changes
+															</Button>
+															<Button
+																onClick={() => {
+																	setEditingUserId(false);
+																	setNewUserId("");
+																	setUserIdError("");
+																}}
+																size="sm"
+																className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100"
+															>
+																Cancel
+															</Button>
+														</div>
+													</div>
+												) : (
+													<div className="space-y-3">
+														<div className="p-4 bg-slate-700/50 rounded-lg border border-slate-600">
+															<p className="text-slate-300 font-mono text-lg">
+																{userId}
+															</p>
+															<p className="text-sm text-slate-400 mt-1">
+																This is your unique identifier
+															</p>
+														</div>
+													</div>
+												)}
+											</div>
+										</div>
+
+										{/* Interests Section */}
+										<div className="border-t border-slate-700 pt-6">
+											<div className="flex items-center gap-3 mb-4">
+												<div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+													<span className="text-xs">🎯</span>
 												</div>
+												<h3 className="text-base font-medium text-slate-200 font-heading">
+													Update Your Interests
+												</h3>
 											</div>
-										</div>
-									</div>
-								</CardContent>
-							</Card>
+											<p className="text-slate-400 mb-4">
+												Modify your interests to find better matches
+											</p>
 
-							{/* Interests Section */}
-							<Card className="bg-slate-800/50 border-slate-700">
-								<CardContent className="p-6">
-									<div className="flex items-center gap-3 mb-4">
-										<div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-											<span className="text-xs">🎯</span>
-										</div>
-										<h2 className="text-lg font-semibold text-slate-200">
-											Update Your Interests
-										</h2>
-									</div>
-									<p className="text-slate-400 mb-4">
-										Modify your interests to find better matches
-									</p>
+											<div className="space-y-4">
+												{QLOO_TYPES.map((type) => (
+													<div
+														key={type}
+														className="space-y-2"
+													>
+														<Label
+															htmlFor={type}
+															className="text-sm font-medium text-slate-300 flex items-center gap-2"
+														>
+															{getTypeEmoji(type)}
+															<span className="capitalize">
+																{type.replace("_", " ")}
+															</span>
+														</Label>
+														<ChipInput
+															id={type}
+															values={formData[type] || []}
+															onChange={(values) => handleChange(type, values)}
+															placeholder={getPlaceholder(type)}
+															className="w-full"
+														/>
+													</div>
+												))}
+											</div>
 
-									<div className="space-y-4">
-										{QLOO_TYPES.map((type) => (
-											<div
-												key={type}
-												className="space-y-2"
-											>
-												<Label
-													htmlFor={type}
-													className="text-sm font-medium text-slate-300 flex items-center gap-2"
+											<div className="mt-6 flex gap-4">
+												<Button
+													onClick={handleUpdateProfile}
+													disabled={isLoading}
+													className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white"
 												>
-													{getTypeEmoji(type)}
-													<span className="capitalize">
-														{type.replace("_", " ")}
-													</span>
-												</Label>
-												<ChipInput
-													id={type}
-													values={formData[type] || []}
-													onChange={(values) => handleChange(type, values)}
-													placeholder={getPlaceholder(type)}
-													className="w-full"
-												/>
+													{isLoading ? (
+														<>
+															<div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+															Updating Profile...
+														</>
+													) : (
+														<>
+															<span className="mr-2">🔄</span>
+															Update Profile
+														</>
+													)}
+												</Button>
 											</div>
-										))}
-									</div>
-
-									<div className="mt-6 flex gap-4">
-										<Button
-											onClick={handleUpdateProfile}
-											disabled={isLoading}
-											className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white"
-										>
-											{isLoading ? (
-												<>
-													<div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-													Updating Profile...
-												</>
-											) : (
-												<>
-													<span className="mr-2">🔄</span>
-													Update Profile
-												</>
-											)}
-										</Button>
+										</div>
 									</div>
 								</CardContent>
 							</Card>
