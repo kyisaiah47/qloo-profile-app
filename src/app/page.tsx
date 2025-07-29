@@ -191,6 +191,9 @@ export default function ProfileForm() {
 	const [insightResults, setInsightResults] = useState<
 		Record<string, InsightItem[]>
 	>({});
+	const [userId, setUserId] = useState<string>("");
+	const [isLoading, setIsLoading] = useState(false);
+	const [profileSaved, setProfileSaved] = useState(false);
 
 	const handleChange = (type: string, values: string[]) => {
 		setFormData({ ...formData, [type]: values });
@@ -198,59 +201,90 @@ export default function ProfileForm() {
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		const resolvedEntities: Record<string, InsightItem[]> = {};
-		const insightMap: Record<string, InsightItem[]> = {};
+		setIsLoading(true);
 
-		for (const type of QLOO_TYPES) {
-			const values = formData[type];
-			if (!values || values.length === 0) continue;
+		try {
+			const resolvedEntities: Record<string, InsightItem[]> = {};
+			const insightMap: Record<string, InsightItem[]> = {};
 
-			const typeEntities: InsightItem[] = [];
-			const typeInsights: InsightItem[] = [];
+			// Process Qloo API calls as before
+			for (const type of QLOO_TYPES) {
+				const values = formData[type];
+				if (!values || values.length === 0) continue;
 
-			// Process each value in the array
-			for (const value of values) {
-				const res = await fetch("/api/qloo-search", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ query: value, type }),
-				});
+				const typeEntities: InsightItem[] = [];
+				const typeInsights: InsightItem[] = [];
 
-				const json = await res.json();
-				const entity = json.data?.results?.[0];
-				if (entity) {
-					typeEntities.push(entity);
+				// Process each value in the array
+				for (const value of values) {
+					const res = await fetch("/api/qloo-search", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ query: value, type }),
+					});
 
-					if (entity?.entity_id) {
-						const insightRes = await fetch("/api/qloo-insights", {
-							method: "POST",
-							headers: { "Content-Type": "application/json" },
-							body: JSON.stringify({
-								entityId: entity.entity_id,
-								type,
-								filterType: "brand", // Can be made dynamic later
-								take: 5,
-							}),
-						});
-						const insights = await insightRes.json();
-						const insightResults = insights?.data?.results ?? [];
-						typeInsights.push(...insightResults);
+					const json = await res.json();
+					const entity = json.data?.results?.[0];
+					if (entity) {
+						typeEntities.push(entity);
+
+						if (entity?.entity_id) {
+							const insightRes = await fetch("/api/qloo-insights", {
+								method: "POST",
+								headers: { "Content-Type": "application/json" },
+								body: JSON.stringify({
+									entityId: entity.entity_id,
+									type,
+									filterType: "brand", // Can be made dynamic later
+									take: 5,
+								}),
+							});
+							const insights = await insightRes.json();
+							const insightResults = insights?.data?.results ?? [];
+							typeInsights.push(...insightResults);
+						}
 					}
+				}
+
+				if (typeEntities.length > 0) {
+					resolvedEntities[type] = typeEntities;
+					insightMap[type] = typeInsights;
 				}
 			}
 
-			if (typeEntities.length > 0) {
-				resolvedEntities[type] = typeEntities;
-				insightMap[type] = typeInsights;
-			}
-		}
+			console.log("Resolved Entities:", resolvedEntities);
+			console.log("Qloo Insights:", insightMap);
 
-		console.log("Resolved Entities:", resolvedEntities);
-		console.log("Qloo Insights:", insightMap);
-		Object.entries(insightMap).map(([type, results]) => {
-			console.log(`Insights for ${type}:`, Object.values(results)[0]);
-		});
-		setInsightResults(insightMap);
+			// Save to database
+			const saveResponse = await fetch("/api/save-profile", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					userId: userId || undefined, // Let the API generate one if not provided
+					interests: formData,
+					insights: insightMap,
+				}),
+			});
+
+			const saveResult = await saveResponse.json();
+
+			if (saveResult.success) {
+				setUserId(saveResult.data.userId);
+				setProfileSaved(true);
+				console.log("Profile saved successfully!", saveResult);
+
+				// Show insights
+				setInsightResults(insightMap);
+			} else {
+				console.error("Failed to save profile:", saveResult.error);
+				alert("Failed to save profile. Please try again.");
+			}
+		} catch (error) {
+			console.error("Error during profile creation:", error);
+			alert("An error occurred. Please try again.");
+		} finally {
+			setIsLoading(false);
+		}
 	};
 
 	return (
@@ -292,6 +326,9 @@ export default function ProfileForm() {
 					handleChange={handleChange}
 					handleSubmit={handleSubmit}
 					setInsightResults={setInsightResults}
+					isLoading={isLoading}
+					profileSaved={profileSaved}
+					userId={userId}
 				/>
 			)}
 		</div>
@@ -420,6 +457,9 @@ interface ProfileFormScreenProps {
 	handleChange: (type: string, values: string[]) => void;
 	handleSubmit: (e: React.FormEvent) => Promise<void>;
 	setInsightResults: (results: Record<string, InsightItem[]>) => void;
+	isLoading: boolean;
+	profileSaved: boolean;
+	userId: string;
 }
 
 const ProfileFormScreen = ({
@@ -428,6 +468,9 @@ const ProfileFormScreen = ({
 	handleChange,
 	handleSubmit,
 	setInsightResults,
+	isLoading,
+	profileSaved,
+	userId,
 }: ProfileFormScreenProps) => {
 	return (
 		<div className="h-full flex flex-col relative z-10 p-6">
@@ -521,10 +564,33 @@ const ProfileFormScreen = ({
 								<Button
 									type="submit"
 									size="lg"
-									className="px-8 py-3 text-base font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 transition-all duration-200 shadow-lg text-white"
+									disabled={isLoading}
+									className="px-8 py-3 text-base font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 transition-all duration-200 shadow-lg text-white disabled:opacity-50"
 								>
-									Find My Connections ✨
+									{isLoading ? (
+										<>
+											<motion.div
+												animate={{ rotate: 360 }}
+												transition={{
+													duration: 1,
+													repeat: Infinity,
+													ease: "linear",
+												}}
+												className="w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"
+											/>
+											Creating Your Profile...
+										</>
+									) : profileSaved ? (
+										<>Profile Saved! View Results ✨</>
+									) : (
+										<>Find My Connections ✨</>
+									)}
 								</Button>
+								{userId && (
+									<p className="text-xs text-slate-400 mt-2">
+										Your profile ID: {userId}
+									</p>
+								)}
 							</motion.div>
 						</CardContent>
 					</Card>

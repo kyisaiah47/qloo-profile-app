@@ -1,24 +1,108 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Vibe - Social Connection App
 
-## Getting Started
+A Next.js social discovery app that helps people find meaningful connections through shared interests. Users create taste profiles using various categories (music, movies, books, etc.) and get matched with like-minded individuals.
 
-First, run the development server:
+## ✨ Features
+
+- **Smart Taste Profiling**: Multi-category interest input with chip-based UI
+- **AI-Powered Recommendations**: Integration with Qloo API for intelligent insights
+- **Database Storage**: Supabase integration for user profiles and matching
+- **Modern UI**: Dark theme with smooth animations using Framer Motion
+- **Social Matching**: Find users with similar interests
+
+## 🚀 Quick Start
+
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Set Up Environment Variables
+
+Copy the environment variables and add your credentials:
+
+```bash
+# Qloo API (already configured for demo)
+QLOO_API_KEY=your_qloo_api_key
+
+# Supabase Configuration (add your credentials)
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+```
+
+### 3. Set Up Supabase Database
+
+Follow the detailed setup guide in [SUPABASE_SETUP.md](./SUPABASE_SETUP.md)
+
+### 4. Run the Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🛠 Tech Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Framework**: Next.js 15 with TypeScript
+- **UI Components**: shadcn/ui with Tailwind CSS
+- **Animations**: Framer Motion
+- **Database**: Supabase (PostgreSQL)
+- **API Integration**: Qloo for taste insights
+- **Styling**: Tailwind CSS with custom dark theme
+
+## 📁 Project Structure
+
+```
+src/
+├── app/
+│   ├── page.tsx              # Main app component
+│   └── api/
+│       ├── qloo-search/      # Qloo entity search
+│       ├── qloo-insights/    # Qloo recommendations
+│       ├── save-profile/     # Save user profile to DB
+│       └── find-matches/     # Find similar users
+├── components/ui/            # shadcn/ui components
+├── lib/
+│   ├── supabase.ts          # Supabase client & types
+│   ├── database.ts          # Database service functions
+│   └── utils.ts             # Utility functions
+```
+
+## 🔗 API Endpoints
+
+- `POST /api/qloo-search` - Search for entities in Qloo
+- `POST /api/qloo-insights` - Get recommendations from Qloo
+- `POST /api/save-profile` - Save user profile and interests
+- `POST /api/find-matches` - Find users with similar interests
+
+## 🎯 Features
+
+### Interest Categories
+
+- Music (artists, albums)
+- Movies & TV shows
+- Books & authors
+- Places & destinations
+- Brands & products
+- Games & entertainment
+- And more...
+
+### Smart Input System
+
+- Multi-value chip inputs
+- Support for comma, space, tab, and enter separators
+- Real-time validation and deduplication
+- Smooth animations and hover effects
+
+### Database Integration
+
+- User profile storage
+- Interest tracking
+- Recommendation caching
+- User matching algorithms
 
 ## Learn More
 
