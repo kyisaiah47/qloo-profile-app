@@ -1185,7 +1185,7 @@ const LoginScreen = ({
 									<Button
 										onClick={onLogin}
 										disabled={isLoading}
-										className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 transition-all duration-300"
+										className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white transition-all duration-300"
 									>
 										{isLoading ? (
 											<>
@@ -1361,7 +1361,7 @@ const UserProfileScreen = ({
 								<Button
 									onClick={findMatches}
 									disabled={loadingMatches}
-									className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-lg font-semibold"
+									className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-lg font-semibold text-white"
 								>
 									{loadingMatches ? (
 										<>
@@ -1646,7 +1646,7 @@ const ProfileFormScreen = ({
 											<Button
 												onClick={findMatches}
 												disabled={loadingMatches}
-												className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500"
+												className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white"
 											>
 												{loadingMatches ? (
 													<>
@@ -1815,7 +1815,7 @@ const ProfileFormScreen = ({
 														<div className="mt-4">
 															<Button
 																size="sm"
-																className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500"
+																className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white"
 															>
 																Connect 💫
 															</Button>
