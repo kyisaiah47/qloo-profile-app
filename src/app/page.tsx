@@ -711,52 +711,7 @@ Please respond with ONLY the username, nothing else.`;
 
 			if (updateResult.success) {
 				console.log("Profile updated successfully!", updateResult);
-
 				setShowProfile(false);
-
-				// Refresh user profile data if logged in
-				if (isLoggedIn) {
-					try {
-						const response = await fetch("/api/get-user-profile", {
-							method: "POST",
-							headers: { "Content-Type": "application/json" },
-							body: JSON.stringify({ userId: userId }),
-						});
-						const result = await response.json();
-						if (result.success && result.data) {
-							setUserProfileData(result.data);
-						}
-						setShowUserProfile(true);
-					} catch (error) {
-						console.error("Error refreshing profile data:", error);
-					}
-				}
-
-				// Optionally regenerate AI profile with updated interests
-				try {
-					const aiResponse = await fetch("/api/generate-profile", {
-						method: "POST",
-						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({
-							interests: formData,
-							insights: insightMap,
-						}),
-					});
-
-					const aiResult = await aiResponse.json();
-					console.log("🔍 UPDATE PROFILE - AI Result:", aiResult);
-					if (aiResult.success && aiResult.data && aiResult.data.headline) {
-						console.log(
-							"🔍 UPDATE PROFILE - Setting valid aiProfile:",
-							aiResult.data
-						);
-						safeSetInsightResults({ aiProfile: aiResult.data });
-					} else {
-						console.error("Invalid AI profile data:", aiResult);
-					}
-				} catch (aiError) {
-					console.error("Error regenerating AI profile:", aiError);
-				}
 			} else {
 				console.error("Failed to update profile. Full response:", updateResult);
 				console.error(
@@ -1074,199 +1029,6 @@ Please respond with ONLY the username, nothing else.`;
 					setShowBulkInput={setShowBulkInput}
 					parseAndFillFields={parseAndFillFields}
 				/>
-			)}
-
-			{/* Profile Management Screen */}
-			{showProfile && (
-				<motion.div
-					initial={{ opacity: 0, x: "100%" }}
-					animate={{ opacity: 1, x: 0 }}
-					exit={{ opacity: 0, x: "100%" }}
-					transition={{ duration: 0.3, ease: "easeInOut" }}
-					className="fixed inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 z-50 flex flex-col"
-				>
-					{/* Header */}
-					<div className="bg-slate-800/95 backdrop-blur-sm border-b border-slate-700 p-4 flex-shrink-0">
-						<div className="max-w-6xl mx-auto flex items-center justify-between">
-							<div className="flex items-center gap-3">
-								<div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-									<span className="text-lg">⚙️</span>
-								</div>
-								<div>
-									<h1 className="text-xl font-bold text-slate-200 font-heading">
-										Profile Settings
-									</h1>
-									<p className="text-xs text-slate-400">
-										Manage your profile and preferences
-									</p>
-								</div>
-							</div>
-							<Button
-								size="lg"
-								onClick={() => {
-									setShowProfile(false);
-									if (isLoggedIn && userProfileData) {
-										setShowUserProfile(true);
-									}
-								}}
-								className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white"
-							>
-								<span className="mr-2">←</span>
-								Back to Profile
-							</Button>
-						</div>
-					</div>
-
-					{/* Content */}
-					<div className="flex-1 overflow-y-auto p-4 min-h-0">
-						<div className="max-w-6xl mx-auto space-y-6 pb-4">
-							{/* Combined Profile Management Section */}
-							<Card className="bg-slate-800/50 border-slate-700">
-								<CardContent className="p-6">
-									<div className="flex items-center gap-3 mb-6">
-										<div className="w-6 h-6 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
-											<span className="text-xs">👤</span>
-										</div>
-										<h2 className="text-lg font-semibold text-slate-200 font-heading">
-											Profile Management
-										</h2>
-									</div>
-
-									{/* Personal Information Section */}
-									<div className="space-y-6">
-										<div>
-											<h3 className="text-base font-medium text-slate-200 font-heading mb-4">
-												Personal Information
-											</h3>
-											<div className="space-y-3">
-												{editingUserId ? (
-													<div className="space-y-3">
-														<div>
-															<Label
-																htmlFor="user-id-input"
-																className="text-slate-300 mb-2"
-															>
-																New User ID
-															</Label>
-															<Input
-																id="user-id-input"
-																value={newUserId}
-																onChange={(e) => {
-																	setNewUserId(e.target.value);
-																	setUserIdError("");
-																}}
-																placeholder="Enter your new User ID"
-																className="bg-slate-700 border-slate-600 text-slate-200 focus:border-blue-500"
-															/>
-															{userIdError && (
-																<p className="text-red-400 text-sm">
-																	{userIdError}
-																</p>
-															)}
-														</div>
-														<div className="flex gap-2">
-															<Button
-																onClick={handleUserIdUpdate}
-																size="sm"
-																className="bg-blue-600 hover:bg-blue-500 text-white"
-															>
-																Save Changes
-															</Button>
-															<Button
-																onClick={() => {
-																	setEditingUserId(false);
-																	setNewUserId("");
-																	setUserIdError("");
-																}}
-																size="sm"
-																className="bg-gradient-to-r from-gray-600/80 to-gray-500/80 hover:from-gray-500 hover:to-gray-400 text-white border border-gray-400/30 hover:border-gray-300/50 shadow-lg hover:shadow-gray-500/25 transition-all duration-200"
-															>
-																<span className="mr-1">✕</span>
-																Cancel
-															</Button>
-														</div>
-													</div>
-												) : (
-													<div className="space-y-3">
-														<div className="p-4 bg-slate-700/50 rounded-lg border border-slate-600">
-															<p className="text-slate-300 font-mono text-lg">
-																{userId}
-															</p>
-															<p className="text-sm text-slate-400 mt-1">
-																This is your unique identifier
-															</p>
-														</div>
-													</div>
-												)}
-											</div>
-										</div>
-
-										{/* Interests Section */}
-										<div className="border-t border-slate-700 pt-6">
-											<div className="flex items-center gap-3 mb-4">
-												<div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-													<span className="text-xs">🎯</span>
-												</div>
-												<h3 className="text-base font-medium text-slate-200 font-heading">
-													Update Your Interests
-												</h3>
-											</div>
-											<p className="text-slate-400 mb-4">
-												Modify your interests to find better matches
-											</p>
-
-											<div className="space-y-4">
-												{QLOO_TYPES.map((type) => (
-													<div
-														key={type}
-														className="space-y-2"
-													>
-														<Label
-															htmlFor={type}
-															className="text-sm font-medium text-slate-300 flex items-center gap-2"
-														>
-															{getTypeEmoji(type)}
-															<span className="capitalize">
-																{type.replace("_", " ")}
-															</span>
-														</Label>
-														<ChipInput
-															id={type}
-															values={formData[type] || []}
-															onChange={(values) => handleChange(type, values)}
-															placeholder={getPlaceholder(type)}
-															className="w-full"
-														/>
-													</div>
-												))}
-											</div>
-
-											<div className="mt-6 flex gap-4">
-												<Button
-													onClick={handleUpdateProfile}
-													disabled={isLoading}
-													className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white"
-												>
-													{isLoading ? (
-														<>
-															<div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-															Updating Profile...
-														</>
-													) : (
-														<>
-															<span className="mr-2">🔄</span>
-															Update Profile
-														</>
-													)}
-												</Button>
-											</div>
-										</div>
-									</div>
-								</CardContent>
-							</Card>
-						</div>
-					</div>
-				</motion.div>
 			)}
 		</div>
 	);
@@ -1643,26 +1405,61 @@ const UserProfileScreen = ({
 
 	// Handle profile update within UserProfileScreen
 	const handleProfileUpdate = async () => {
+		console.log("🔄 handleProfileUpdate called");
 		try {
+			console.log("🔄 Calling handleUpdateProfile...");
 			await handleUpdateProfile();
+			console.log("✅ handleUpdateProfile completed successfully");
+
 			// After successful update, switch to profile tab and regenerate taste profile
+			console.log("🔄 Switching to profile tab...");
 			setActiveTab("profile");
-			// Small delay to ensure tab switch happens first
-			setTimeout(() => {
-				generateTasteProfile();
-			}, 100);
+
+			// Fetch fresh user profile data and then generate taste profile
+			console.log("🔄 Fetching fresh user profile data...");
+			if (userId) {
+				try {
+					const response = await fetch("/api/get-user-profile", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ userId: userId }),
+					});
+					const result = await response.json();
+					if (result.success && result.data) {
+						console.log("✅ Fresh user profile data received:", result.data);
+						// Update state with fresh data
+						setUserProfileData(result.data);
+
+						// Now generate taste profile with fresh interests
+						console.log("🔄 Calling generateTasteProfile with fresh data...");
+						setTimeout(() => {
+							generateTasteProfile();
+						}, 100);
+					}
+				} catch (error) {
+					console.error("❌ Error fetching fresh profile data:", error);
+				}
+			}
 		} catch (error) {
-			console.error("Error updating profile:", error);
+			console.error("❌ Error updating profile:", error);
 		}
 	};
 
 	// Generate taste profile function
 	const generateTasteProfile = useCallback(async () => {
+		console.log("🔍 generateTasteProfile called");
+		console.log("🔍 userProfileData:", userProfileData);
+		console.log(
+			"🔍 userProfileData.profile.interests:",
+			userProfileData?.profile?.interests
+		);
+
 		if (!userProfileData?.profile?.interests) {
-			console.log("No interests found for profile generation");
+			console.log("❌ No interests found for profile generation");
 			return;
 		}
 
+		console.log("✅ Starting taste profile generation");
 		setLoadingTasteProfile(true);
 		try {
 			const resolvedEntities: Record<string, InsightItem[]> = {};

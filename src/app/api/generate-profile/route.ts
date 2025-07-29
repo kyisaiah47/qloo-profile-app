@@ -5,8 +5,11 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 export async function POST(request: NextRequest) {
+	console.log("🚀 /api/generate-profile route called");
 	try {
 		const body = await request.json();
+		console.log("📝 Request body:", JSON.stringify(body, null, 2));
+
 		const {
 			interests,
 			insights,
@@ -24,15 +27,6 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		// Prepare data for AI analysis
-		const interestsText = Object.entries(interests)
-			.filter(([, values]) => Array.isArray(values) && values.length > 0)
-			.map(
-				([category, values]) =>
-					`${category}: ${(values as string[]).join(", ")}`
-			)
-			.join("\n");
-
 		const insightsText = Object.entries(insights || {})
 			.filter(([, entities]) => Array.isArray(entities) && entities.length > 0)
 			.map(([category, entities]) => {
@@ -44,35 +38,31 @@ export async function POST(request: NextRequest) {
 			})
 			.join("\n");
 
-		// Create the AI prompt
-		let prompt = customPrompt;
+		// Count interests to understand the user's breadth
+		const totalInterests = Object.values(interests).flat().length;
+		const categoryCount = Object.keys(interests).length;
 
-		if (!customPrompt) {
-			// Count interests to understand the user's breadth
-			const totalInterests = Object.values(interests).flat().length;
-			const categoryCount = Object.keys(interests).length;
+		// Extract specific examples for more context
+		const specificInterests = Object.entries(interests)
+			.filter(([, values]) => Array.isArray(values) && values.length > 0)
+			.map(([category, values]) => ({
+				category,
+				items: (values as string[]).slice(0, 3),
+				count: (values as string[]).length,
+			}));
 
-			// Extract specific examples for more context
-			const specificInterests = Object.entries(interests)
-				.filter(([, values]) => Array.isArray(values) && values.length > 0)
-				.map(([category, values]) => ({
-					category,
-					items: (values as string[]).slice(0, 3),
-					count: (values as string[]).length,
-				}));
+		// Create unique identifiers based on their specific interests
+		const dominantCategories = specificInterests
+			.sort((a, b) => b.count - a.count)
+			.slice(0, 3)
+			.map((cat) => cat.category);
 
-			// Create unique identifiers based on their specific interests
-			const dominantCategories = specificInterests
-				.sort((a, b) => b.count - a.count)
-				.slice(0, 3)
-				.map((cat) => cat.category);
+		const uniqueCombination = specificInterests
+			.flatMap((cat) => cat.items)
+			.slice(0, 8)
+			.join(", ");
 
-			const uniqueCombination = specificInterests
-				.flatMap((cat) => cat.items)
-				.slice(0, 8)
-				.join(", ");
-
-			prompt = `
+		const prompt = `
 You are creating a highly personalized taste profile for someone with these SPECIFIC interests. Make this profile UNIQUE and avoid generic language.
 
 DETAILED INTEREST BREAKDOWN:
@@ -110,15 +100,44 @@ Generate a JSON response with these fields:
 }
 
 CRITICAL: Make this feel like a custom-written profile, not a template. Reference their specific taste combination.`;
+
+		console.log("🤖 About to call Gemini AI");
+		console.log("🔑 API Key exists:", !!process.env.GEMINI_API_KEY);
+		console.log(
+			"� API Key first 10 chars:",
+			process.env.GEMINI_API_KEY?.substring(0, 10)
+		);
+		console.log("�📄 Prompt length:", prompt.length);
+
+		// Validate genAI instance
+		if (!genAI) {
+			throw new Error("Failed to initialize Google Generative AI instance");
 		}
 
 		// Get AI model
 		const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+		console.log("✅ AI Model created successfully");
+
+		if (!model) {
+			throw new Error("Failed to get AI model");
+		}
 
 		// Generate content
+		console.log("⚡ Calling generateContent...");
 		const result = await model.generateContent(prompt);
+		console.log("✅ AI generation completed");
+		console.log("🔍 Result object:", result);
+
 		const response = await result.response;
+		console.log("✅ Response object received");
+		console.log("🔍 Response object:", response);
+
 		const text = response.text();
+		console.log(
+			"✅ Text extracted from response:",
+			text.substring(0, 200) + "..."
+		);
+		console.log("📄 Full text response:", text);
 
 		// Parse the response
 		let profileData;
@@ -163,7 +182,17 @@ CRITICAL: Make this feel like a custom-written profile, not a template. Referenc
 			data: profileData,
 		});
 	} catch (error) {
-		console.error("Error generating AI profile:", error);
+		console.error("❌ Error in /api/generate-profile:");
+		console.error("Error type:", typeof error);
+		console.error(
+			"Error message:",
+			error instanceof Error ? error.message : String(error)
+		);
+		console.error(
+			"Error stack:",
+			error instanceof Error ? error.stack : "No stack trace"
+		);
+		console.error("Full error object:", error);
 
 		// Return a fallback response if AI fails
 		return NextResponse.json({
