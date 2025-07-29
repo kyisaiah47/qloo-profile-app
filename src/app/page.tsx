@@ -1003,48 +1003,15 @@ Please respond with ONLY the username, nothing else.`;
 					findMatches={findMatches}
 					loadingMatches={loadingMatches}
 					matches={matches}
-					onEditProfile={() => {
-						console.log("🔧 Edit Profile clicked");
-						console.log("🔧 User Profile Data:", userProfileData);
-						if (userProfileData?.interests) {
-							console.log(
-								"🔧 Setting form data with interests:",
-								userProfileData.interests
-							);
-
-							// Handle malformed interests data where categories might be undefined
-							const cleanedInterests: Record<string, string[]> = {};
-
-							// If there's an 'undefined' key, try to distribute the values
-							if (
-								userProfileData.interests.undefined &&
-								Array.isArray(userProfileData.interests.undefined)
-							) {
-								console.log(
-									"🔧 Found undefined key, distributing values:",
-									userProfileData.interests.undefined
-								);
-								// For now, put them in 'artist' category as a fallback
-								cleanedInterests.artist = userProfileData.interests.undefined;
-							}
-
-							// Copy over any properly categorized interests
-							Object.entries(userProfileData.interests).forEach(
-								([key, values]) => {
-									if (key !== "undefined" && key && QLOO_TYPES.includes(key)) {
-										cleanedInterests[key] = values;
-									}
-								}
-							);
-
-							console.log("🔧 Cleaned interests:", cleanedInterests);
-							setFormData(cleanedInterests);
-						} else {
-							console.log("🔧 No interests found in user profile data");
-						}
-						setShowUserProfile(false);
-						setShowProfile(true);
-					}}
+					formData={formData}
+					handleChange={handleChange}
+					bulkInput={bulkInput}
+					setBulkInput={setBulkInput}
+					showBulkInput={showBulkInput}
+					setShowBulkInput={setShowBulkInput}
+					parseAndFillFields={parseAndFillFields}
+					handleUpdateProfile={handleUpdateProfile}
+					isLoading={isLoading}
 					onLogout={() => {
 						// Clear all data for clean session
 						setIsLoggedIn(false);
@@ -1566,20 +1533,82 @@ const UserProfileScreen = ({
 	findMatches,
 	loadingMatches,
 	matches,
-	onEditProfile,
 	onLogout,
+	formData,
+	handleChange,
+	bulkInput,
+	setBulkInput,
+	showBulkInput,
+	setShowBulkInput,
+	parseAndFillFields,
+	handleUpdateProfile,
+	isLoading,
 }: {
 	userProfileData: UserProfileData | null;
 	userId: string;
 	findMatches: () => void;
 	loadingMatches: boolean;
 	matches: Match[];
-	onEditProfile: () => void;
 	onLogout: () => void;
+	formData: Record<string, string[]>;
+	handleChange: (type: string, values: string[]) => void;
+	bulkInput: string;
+	setBulkInput: (value: string) => void;
+	showBulkInput: boolean;
+	setShowBulkInput: (show: boolean) => void;
+	parseAndFillFields: (inputString: string) => void;
+	handleUpdateProfile: () => Promise<void>;
+	isLoading: boolean;
 }) => {
 	const [tasteProfile, setTasteProfile] = useState<AIProfile | null>(null);
 	const [loadingTasteProfile, setLoadingTasteProfile] = useState(false);
 	const [showMatches, setShowMatches] = useState(false);
+	const [activeTab, setActiveTab] = useState<"profile" | "interests">(
+		"profile"
+	);
+
+	// Load current user interests into formData
+	useEffect(() => {
+		if (userProfileData?.interests) {
+			console.log(
+				"Loading user interests into formData:",
+				userProfileData.interests
+			);
+
+			// Handle malformed interests data where categories might be undefined
+			const cleanedInterests: Record<string, string[]> = {};
+
+			// If there's an 'undefined' key, try to distribute the values
+			if (
+				userProfileData.interests.undefined &&
+				Array.isArray(userProfileData.interests.undefined)
+			) {
+				// For now, put them in 'artist' category as a fallback
+				cleanedInterests.artist = userProfileData.interests.undefined;
+			}
+
+			// Copy over any properly categorized interests
+			Object.entries(userProfileData.interests).forEach(([key, values]) => {
+				if (key !== "undefined" && key && QLOO_TYPES.includes(key)) {
+					cleanedInterests[key] = values;
+				}
+			});
+
+			// Only update if there are actual changes
+			const hasChanges =
+				JSON.stringify(cleanedInterests) !== JSON.stringify(formData);
+			if (hasChanges) {
+				console.log(
+					"Updating formData with cleaned interests:",
+					cleanedInterests
+				);
+				// We need to call handleChange for each type to properly update the parent state
+				Object.entries(cleanedInterests).forEach(([type, values]) => {
+					handleChange(type, values);
+				});
+			}
+		}
+	}, [userProfileData?.interests, handleChange, formData]);
 
 	// Handle finding matches within UserProfileScreen
 	const handleFindMatches = async () => {
@@ -1751,6 +1780,32 @@ const UserProfileScreen = ({
 							transition={{ delay: 0.4, duration: 0.6 }}
 							className="flex-1 flex flex-col min-h-0"
 						>
+							{!showMatches && (
+								/* Tab Navigation */
+								<div className="flex border-b border-slate-600 mb-6">
+									<button
+										onClick={() => setActiveTab("profile")}
+										className={`px-6 py-3 font-medium transition-colors ${
+											activeTab === "profile"
+												? "text-blue-400 border-b-2 border-blue-400"
+												: "text-slate-400 hover:text-slate-200"
+										}`}
+									>
+										Your Taste Profile
+									</button>
+									<button
+										onClick={() => setActiveTab("interests")}
+										className={`px-6 py-3 font-medium transition-colors ${
+											activeTab === "interests"
+												? "text-blue-400 border-b-2 border-blue-400"
+												: "text-slate-400 hover:text-slate-200"
+										}`}
+									>
+										Update Interests
+									</button>
+								</div>
+							)}
+
 							{/* Scrollable Content Area */}
 							<div className="flex-1 overflow-y-auto pr-2 mb-4">
 								{showMatches ? (
@@ -1842,8 +1897,8 @@ const UserProfileScreen = ({
 											)}
 										</div>
 									</>
-								) : (
-									/* Profile View */
+								) : activeTab === "profile" ? (
+									/* Profile Tab */
 									<>
 										{/* Profile Info */}
 										<div className="space-y-6 flex-1 flex flex-col min-h-0 mb-6">
@@ -2012,6 +2067,119 @@ const UserProfileScreen = ({
 											</div>
 										</div>
 									</>
+								) : (
+									/* Interests Tab */
+									<div className="space-y-6">
+										{/* Bulk Input Section */}
+										<div className="border-b border-slate-600 pb-6">
+											<div className="flex items-center justify-between mb-3">
+												<h3 className="text-lg font-semibold text-slate-200">
+													Quick Fill
+												</h3>
+												<button
+													type="button"
+													onClick={() => setShowBulkInput(!showBulkInput)}
+													className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+												>
+													{showBulkInput ? "Hide" : "Show"} Bulk Input
+												</button>
+											</div>
+
+											{showBulkInput && (
+												<motion.div
+													initial={{ opacity: 0, height: 0 }}
+													animate={{ opacity: 1, height: "auto" }}
+													exit={{ opacity: 0, height: 0 }}
+													className="space-y-3"
+												>
+													<p className="text-xs text-slate-400">
+														Paste values separated by semicolons (;) to
+														auto-fill all fields. Format:
+														artist1,artist2;album1,album2;book1,book2;...
+													</p>
+													<textarea
+														value={bulkInput}
+														onChange={(e) => setBulkInput(e.target.value)}
+														placeholder="Enter semicolon-separated values..."
+														className="w-full h-24 p-3 bg-slate-700 border border-slate-600 rounded-md text-slate-200 placeholder-slate-400 text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+													/>
+													<div className="flex gap-2">
+														<button
+															type="button"
+															onClick={() => parseAndFillFields(bulkInput)}
+															disabled={!bulkInput.trim()}
+															className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-sm transition-colors"
+														>
+															Parse & Fill Fields
+														</button>
+														<button
+															type="button"
+															onClick={() => {
+																setBulkInput("");
+																setShowBulkInput(false);
+															}}
+															className="px-4 py-2 bg-slate-600 text-slate-300 rounded-md hover:bg-slate-700 text-sm transition-colors"
+														>
+															Clear
+														</button>
+													</div>
+												</motion.div>
+											)}
+										</div>
+
+										{/* Interests Grid */}
+										<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+											{QLOO_TYPES.map((type, index) => (
+												<motion.div
+													key={type}
+													initial={{ opacity: 0, y: 20 }}
+													animate={{ opacity: 1, y: 0 }}
+													transition={{
+														delay: 0.1 + index * 0.03,
+														duration: 0.4,
+													}}
+													className="space-y-3 group"
+												>
+													<Label
+														htmlFor={type}
+														className="capitalize text-sm font-semibold text-slate-300 flex items-center gap-2 group-hover:text-blue-400 transition-colors"
+													>
+														<span className="text-base">
+															{getTypeEmoji(type)}
+														</span>
+														{type.replace("_", " ")}
+													</Label>
+													<ChipInput
+														id={type}
+														placeholder={`e.g. ${getPlaceholder(type)}`}
+														values={formData[type] || []}
+														onChange={(values) => handleChange(type, values)}
+													/>
+												</motion.div>
+											))}
+										</div>
+
+										{/* Update Profile Button */}
+										<div className="pt-4 border-t border-slate-700">
+											<Button
+												onClick={handleUpdateProfile}
+												disabled={isLoading}
+												className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white"
+											>
+												{isLoading ? (
+													<>
+														<div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+														Updating Profile...
+													</>
+												) : (
+													<>
+														<span className="mr-2">🔄</span>
+														Update Profile
+													</>
+												)}
+											</Button>
+										</div>
+									</div>
 								)}
 							</div>
 
@@ -2026,37 +2194,28 @@ const UserProfileScreen = ({
 										Go to Profile
 									</Button>
 								) : (
-									<>
-										<Button
-											onClick={handleFindMatches}
-											disabled={loadingMatches}
-											className="flex-1 h-16 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 text-xl font-bold text-white shadow-2xl border-2 border-blue-400/50 hover:border-blue-300/70 transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 hover:shadow-blue-500/25"
-										>
-											{loadingMatches ? (
-												<>
-													<div className="animate-spin w-6 h-6 border-3 border-white border-t-transparent rounded-full mr-3"></div>
-													<span className="text-xl">
-														Finding Your Perfect Matches...
-													</span>
-												</>
-											) : (
-												<>
-													<span className="text-2xl mr-3">🤝</span>
-													<span className="bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent font-heading">
-														Find Your Tribe
-													</span>
-													<span className="text-2xl ml-3">✨</span>
-												</>
-											)}
-										</Button>
-										<Button
-											onClick={onEditProfile}
-											className="px-8 h-16 bg-gradient-to-r from-emerald-600/80 to-teal-600/80 hover:from-emerald-500 hover:to-teal-500 text-white border border-emerald-400/30 hover:border-emerald-300/50 shadow-lg hover:shadow-emerald-500/25 transition-all duration-200"
-										>
-											<span className="mr-2 text-lg">✏️</span>
-											<span className="text-lg">Edit Profile</span>
-										</Button>
-									</>
+									<Button
+										onClick={handleFindMatches}
+										disabled={loadingMatches}
+										className="flex-1 h-16 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 text-xl font-bold text-white shadow-2xl border-2 border-blue-400/50 hover:border-blue-300/70 transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 hover:shadow-blue-500/25"
+									>
+										{loadingMatches ? (
+											<>
+												<div className="animate-spin w-6 h-6 border-3 border-white border-t-transparent rounded-full mr-3"></div>
+												<span className="text-xl">
+													Finding Your Perfect Matches...
+												</span>
+											</>
+										) : (
+											<>
+												<span className="text-2xl mr-3">🤝</span>
+												<span className="bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent font-heading">
+													Find Your Tribe
+												</span>
+												<span className="text-2xl ml-3">✨</span>
+											</>
+										)}
+									</Button>
 								)}
 							</div>
 						</motion.div>
