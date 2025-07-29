@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, KeyboardEvent } from "react";
+import React, { useState, useRef, KeyboardEvent, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,7 +39,7 @@ const ChipInput: React.FC<ChipInputProps> = ({
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = e.target.value;
-		const separators = [",", " ", "\t"];
+		const separators = [",", "  ", "\t"];
 
 		// Check if any separator is in the value
 		const hasSeparator = separators.some((sep) => value.includes(sep));
@@ -240,6 +240,70 @@ export default function ProfileForm() {
 	const [editingUserId, setEditingUserId] = useState(false);
 	const [newUserId, setNewUserId] = useState("");
 	const [userIdError, setUserIdError] = useState("");
+	const [connectionUserId, setConnectionUserId] = useState("");
+	const [connectionUserIdError, setConnectionUserIdError] = useState("");
+	const [validatingConnectionUserId, setValidatingConnectionUserId] =
+		useState(false);
+	const [generatingUsername, setGeneratingUsername] = useState(false);
+
+	// Debug useEffect to track insightResults changes
+	useEffect(() => {
+		console.log("=== DEBUG insightResults ===");
+		console.log("insightResults:", insightResults);
+		console.log("aiProfile:", insightResults.aiProfile);
+		console.log("aiProfile type:", typeof insightResults.aiProfile);
+		if (insightResults.aiProfile) {
+			console.log("aiProfile keys:", Object.keys(insightResults.aiProfile));
+			if (insightResults.aiProfile.traits) {
+				console.log("traits:", insightResults.aiProfile.traits);
+				console.log("traits type:", typeof insightResults.aiProfile.traits);
+				console.log(
+					"traits isArray:",
+					Array.isArray(insightResults.aiProfile.traits)
+				);
+			}
+		}
+		console.log("=== END DEBUG ===");
+	}, [insightResults]);
+
+	// Safe wrapper for setInsightResults to prevent error objects from being set
+	const safeSetInsightResults = (
+		data: Record<string, InsightItem[]> & { aiProfile?: AIProfile }
+	) => {
+		console.log("🔍 SAFE SET - Input data:", data);
+
+		// If setting aiProfile, validate the structure
+		if (data && data.aiProfile) {
+			const aiProfile = data.aiProfile;
+			console.log("🔍 SAFE SET - aiProfile data:", aiProfile);
+			console.log("🔍 SAFE SET - aiProfile keys:", Object.keys(aiProfile));
+
+			// Check if this looks like a database error object
+			if (
+				"code" in aiProfile &&
+				"details" in aiProfile &&
+				"message" in aiProfile
+			) {
+				console.error(
+					"🚨 PREVENTED ERROR OBJECT from being set as aiProfile:",
+					aiProfile
+				);
+				return; // Don't set the error object
+			}
+
+			// Check if it has the expected profile structure
+			if (!aiProfile.headline || typeof aiProfile.headline !== "string") {
+				console.error(
+					"🚨 INVALID aiProfile structure, missing headline:",
+					aiProfile
+				);
+				return; // Don't set invalid structure
+			}
+		}
+
+		console.log("🔍 SAFE SET - Setting data:", data);
+		setInsightResults(data);
+	};
 
 	const handleChange = (type: string, values: string[]) => {
 		setFormData({ ...formData, [type]: values });
@@ -285,7 +349,9 @@ export default function ProfileForm() {
 	};
 
 	const findMatches = async () => {
-		if (!userId) return;
+		// First validate the connection user ID
+		const isValid = await validateConnectionUserId();
+		if (!isValid) return;
 
 		setLoadingMatches(true);
 		try {
@@ -294,14 +360,14 @@ export default function ProfileForm() {
 				headers: {
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({ userId }),
+				body: JSON.stringify({ userId: connectionUserId.trim() }),
 			});
 
 			const result = await response.json();
 			if (result.success) {
 				setMatches(result.similarUsers || []);
 				setShowMatches(true);
-				setInsightResults({}); // Close the AI profile display
+				safeSetInsightResults({}); // Close the AI profile display
 			} else {
 				console.error("Failed to find matches:", result.message);
 			}
@@ -309,6 +375,129 @@ export default function ProfileForm() {
 			console.error("Error finding matches:", error);
 		} finally {
 			setLoadingMatches(false);
+		}
+	};
+
+	const validateConnectionUserId = async () => {
+		if (!connectionUserId.trim()) {
+			setConnectionUserIdError("User ID cannot be empty");
+			return false;
+		}
+
+		setValidatingConnectionUserId(true);
+		setConnectionUserIdError("");
+
+		try {
+			// Check if user ID exists in the database
+			const response = await fetch("/api/check-user-id", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ userId: connectionUserId.trim() }),
+			});
+
+			const result = await response.json();
+
+			if (result.exists) {
+				// User ID exists - this is good for finding connections
+				return true;
+			} else {
+				setConnectionUserIdError(
+					"User ID not found. Please enter a valid User ID."
+				);
+				return false;
+			}
+		} catch (error) {
+			console.error("Error validating user ID:", error);
+			setConnectionUserIdError("Error validating User ID. Please try again.");
+			return false;
+		} finally {
+			setValidatingConnectionUserId(false);
+		}
+	};
+
+	const generateUsername = async () => {
+		// Check if we have any interests to base the username on
+		const hasInterests = Object.values(formData).some(
+			(values) => values && values.length > 0
+		);
+
+		if (!hasInterests) {
+			setConnectionUserIdError(
+				"Please add some interests first to generate a username"
+			);
+			return;
+		}
+
+		setGeneratingUsername(true);
+		setConnectionUserIdError("");
+
+		try {
+			// Prepare interests text for AI
+			const interestsText = Object.entries(formData)
+				.filter(([, values]) => Array.isArray(values) && values.length > 0)
+				.map(
+					([category, values]) =>
+						`${category}: ${(values as string[]).join(", ")}`
+				)
+				.join("\n");
+
+			const prompt = `
+Based on the following user interests, generate a creative, unique username that reflects their personality and tastes. The username should be:
+- 6-15 characters long
+- Easy to remember and type
+- Creative but not too obscure
+- Reflects their interests/personality
+- Uses alphanumeric characters only (no special characters except underscores)
+
+USER INTERESTS:
+${interestsText}
+
+Please respond with ONLY the username, nothing else.`;
+
+			const response = await fetch("/api/generate-profile", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					interests: formData,
+					insights: {},
+					prompt: prompt,
+					generateUsernameOnly: true,
+				}),
+			});
+
+			const result = await response.json();
+
+			if (result.success && result.data) {
+				// Extract username from the response
+				let username = result.data;
+				if (typeof result.data === "object" && result.data.username) {
+					username = result.data.username;
+				} else if (typeof result.data === "string") {
+					username = result.data.trim();
+				}
+
+				// Clean the username (remove any extra text, quotes, etc.)
+				username = username.replace(/[^a-zA-Z0-9_]/g, "").substring(0, 15);
+
+				if (username) {
+					setConnectionUserId(username);
+				} else {
+					setConnectionUserIdError(
+						"Failed to generate username. Please try again."
+					);
+				}
+			} else {
+				setConnectionUserIdError(
+					"Failed to generate username. Please try again."
+				);
+			}
+		} catch (error) {
+			console.error("Error generating username:", error);
+			setConnectionUserIdError("Error generating username. Please try again.");
+		} finally {
+			setGeneratingUsername(false);
 		}
 	};
 
@@ -477,8 +666,13 @@ export default function ProfileForm() {
 					});
 
 					const aiResult = await aiResponse.json();
+					console.log("🔍 UPDATE PROFILE - AI Result:", aiResult);
 					if (aiResult.success && aiResult.data && aiResult.data.headline) {
-						setInsightResults({ aiProfile: aiResult.data });
+						console.log(
+							"🔍 UPDATE PROFILE - Setting valid aiProfile:",
+							aiResult.data
+						);
+						safeSetInsightResults({ aiProfile: aiResult.data });
 					} else {
 						console.error("Invalid AI profile data:", aiResult);
 					}
@@ -499,6 +693,8 @@ export default function ProfileForm() {
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+		console.log("🔍 FORM SUBMIT STARTED");
+		console.log("🔍 Form data:", formData);
 		setIsLoading(true);
 
 		try {
@@ -595,18 +791,24 @@ export default function ProfileForm() {
 					});
 
 					const aiResult = await aiResponse.json();
-					if (aiResult.success) {
+					console.log("🔍 SUBMIT - AI Result from generate-profile:", aiResult);
+					if (aiResult.success && aiResult.data && aiResult.data.headline) {
+						console.log("🔍 SUBMIT - Setting valid aiProfile:", aiResult.data);
 						// Show the AI-generated profile instead of raw insights
-						setInsightResults({ aiProfile: aiResult.data }); // Using insights display for AI profile
+						safeSetInsightResults({ aiProfile: aiResult.data }); // Using insights display for AI profile
 					} else {
-						console.error("Failed to generate AI profile:", aiResult.error);
+						console.error(
+							"Failed to generate AI profile or invalid data:",
+							aiResult
+						);
+						console.log("🔍 SUBMIT - Setting insightMap fallback:", insightMap);
 						// Fallback to showing insights if AI fails
-						setInsightResults(insightMap);
+						safeSetInsightResults(insightMap);
 					}
 				} catch (aiError) {
 					console.error("Error generating AI profile:", aiError);
 					// Fallback to showing insights if AI fails
-					setInsightResults(insightMap);
+					safeSetInsightResults(insightMap);
 				}
 			} else {
 				console.error("Failed to save profile:", saveResult.error);
@@ -699,7 +901,7 @@ export default function ProfileForm() {
 					insightResults={insightResults}
 					handleChange={handleChange}
 					handleSubmit={handleSubmit}
-					setInsightResults={setInsightResults}
+					setInsightResults={safeSetInsightResults}
 					isLoading={isLoading}
 					profileSaved={profileSaved}
 					userId={userId}
@@ -709,6 +911,13 @@ export default function ProfileForm() {
 					showMatches={showMatches}
 					setShowMatches={setShowMatches}
 					setShowProfile={setShowProfile}
+					connectionUserId={connectionUserId}
+					setConnectionUserId={setConnectionUserId}
+					connectionUserIdError={connectionUserIdError}
+					setConnectionUserIdError={setConnectionUserIdError}
+					validatingConnectionUserId={validatingConnectionUserId}
+					generateUsername={generateUsername}
+					generatingUsername={generatingUsername}
 				/>
 			)}
 
@@ -1399,6 +1608,13 @@ interface ProfileFormScreenProps {
 	showMatches: boolean;
 	setShowMatches: (show: boolean) => void;
 	setShowProfile: (show: boolean) => void;
+	connectionUserId: string;
+	setConnectionUserId: (value: string) => void;
+	connectionUserIdError: string;
+	setConnectionUserIdError: (error: string) => void;
+	validatingConnectionUserId: boolean;
+	generateUsername: () => Promise<void>;
+	generatingUsername: boolean;
 }
 
 const ProfileFormScreen = ({
@@ -1416,6 +1632,13 @@ const ProfileFormScreen = ({
 	showMatches,
 	setShowMatches,
 	setShowProfile,
+	connectionUserId,
+	setConnectionUserId,
+	connectionUserIdError,
+	setConnectionUserIdError,
+	validatingConnectionUserId,
+	generateUsername,
+	generatingUsername,
 }: ProfileFormScreenProps) => {
 	return (
 		<div className="h-full flex flex-col relative z-10 p-6">
@@ -1506,10 +1729,70 @@ const ProfileFormScreen = ({
 								transition={{ delay: 0.8, duration: 0.4 }}
 								className="text-center mt-4 pt-4 border-t border-slate-700 flex-shrink-0"
 							>
+								{/* Username Input for Finding Connections */}
+								<div className="mb-4 max-w-md mx-auto">
+									<Label
+										htmlFor="connectionUserId"
+										className="text-sm font-medium text-slate-300 mb-2 block"
+									>
+										Enter Username to Find Connections
+									</Label>
+									<div className="relative flex gap-2">
+										<Input
+											id="connectionUserId"
+											type="text"
+											placeholder="Enter username..."
+											value={connectionUserId}
+											onChange={(e) => {
+												setConnectionUserId(e.target.value);
+												setConnectionUserIdError(""); // Clear error when typing
+											}}
+											className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 pr-10"
+											disabled={
+												isLoading ||
+												validatingConnectionUserId ||
+												generatingUsername
+											}
+										/>
+										<Button
+											type="button"
+											onClick={generateUsername}
+											disabled={
+												isLoading ||
+												validatingConnectionUserId ||
+												generatingUsername
+											}
+											className="px-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white"
+											title="Generate username from interests"
+										>
+											{generatingUsername ? (
+												<div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+											) : (
+												"✨"
+											)}
+										</Button>
+										{(validatingConnectionUserId || generatingUsername) && (
+											<div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+												<div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+											</div>
+										)}
+									</div>
+									{connectionUserIdError && (
+										<p className="text-red-400 text-xs mt-1">
+											{connectionUserIdError}
+										</p>
+									)}
+								</div>
+
 								<Button
 									type="submit"
 									size="lg"
-									disabled={isLoading}
+									disabled={
+										isLoading ||
+										!connectionUserId.trim() ||
+										validatingConnectionUserId ||
+										generatingUsername
+									}
 									className="px-8 py-3 text-base font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 transition-all duration-200 shadow-lg text-white disabled:opacity-50"
 								>
 									{isLoading ? (
@@ -1572,7 +1855,10 @@ const ProfileFormScreen = ({
 							</div>
 
 							<div className="p-8 overflow-y-auto max-h-[calc(90vh-120px)]">
-								{insightResults.aiProfile ? (
+								{insightResults.aiProfile &&
+								typeof insightResults.aiProfile === "object" &&
+								insightResults.aiProfile.headline &&
+								typeof insightResults.aiProfile.headline === "string" ? (
 									<div className="space-y-6">
 										{/* Main Profile Section */}
 										<div className="text-center space-y-4">
@@ -1582,24 +1868,31 @@ const ProfileFormScreen = ({
 											<h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
 												{insightResults.aiProfile.headline}
 											</h1>
-											<div className="inline-block px-4 py-2 bg-slate-700 rounded-full">
-												<span className="text-sm font-medium text-blue-300">
-													{insightResults.aiProfile.vibe}
-												</span>
-											</div>
+											{insightResults.aiProfile.vibe &&
+												typeof insightResults.aiProfile.vibe === "string" && (
+													<div className="inline-block px-4 py-2 bg-slate-700 rounded-full">
+														<span className="text-sm font-medium text-blue-300">
+															{insightResults.aiProfile.vibe}
+														</span>
+													</div>
+												)}
 										</div>
 
 										{/* Description */}
-										<Card className="bg-slate-700 border-slate-600">
-											<CardContent className="p-6">
-												<h3 className="text-lg font-semibold text-slate-200 mb-3">
-													About You
-												</h3>
-												<p className="text-slate-300 leading-relaxed">
-													{insightResults.aiProfile.description}
-												</p>
-											</CardContent>
-										</Card>
+										{insightResults.aiProfile.description &&
+											typeof insightResults.aiProfile.description ===
+												"string" && (
+												<Card className="bg-slate-700 border-slate-600">
+													<CardContent className="p-6">
+														<h3 className="text-lg font-semibold text-slate-200 mb-3">
+															About You
+														</h3>
+														<p className="text-slate-300 leading-relaxed">
+															{insightResults.aiProfile.description}
+														</p>
+													</CardContent>
+												</Card>
+											)}
 
 										{/* Traits */}
 										<Card className="bg-slate-700 border-slate-600">
@@ -1630,33 +1923,115 @@ const ProfileFormScreen = ({
 										</Card>
 
 										{/* Compatibility */}
-										<Card className="bg-slate-700 border-slate-600">
-											<CardContent className="p-6">
-												<h3 className="text-lg font-semibold text-slate-200 mb-3">
-													Who You&apos;ll Vibe With
-												</h3>
-												<p className="text-slate-300 leading-relaxed">
-													{insightResults.aiProfile.compatibility}
-												</p>
-											</CardContent>
-										</Card>
+										{insightResults.aiProfile.compatibility &&
+											typeof insightResults.aiProfile.compatibility ===
+												"string" && (
+												<Card className="bg-slate-700 border-slate-600">
+													<CardContent className="p-6">
+														<h3 className="text-lg font-semibold text-slate-200 mb-3">
+															Who You&apos;ll Vibe With
+														</h3>
+														<p className="text-slate-300 leading-relaxed">
+															{insightResults.aiProfile.compatibility}
+														</p>
+													</CardContent>
+												</Card>
+											)}
 
 										{/* Action Buttons */}
-										<div className="flex gap-4 pt-4">
-											<Button
-												onClick={findMatches}
-												disabled={loadingMatches}
-												className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white"
-											>
-												{loadingMatches ? (
-													<>
-														<div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-														Finding Your Tribe...
-													</>
-												) : (
-													"Find My Tribe 🤝"
+										<div className="space-y-4 pt-4">
+											{/* Username Input for Finding Connections */}
+											<div className="max-w-md mx-auto">
+												<Label
+													htmlFor="modalConnectionUserId"
+													className="text-sm font-medium text-slate-300 mb-2 block"
+												>
+													Enter Username to Find Connections
+												</Label>
+												<div className="relative flex gap-2">
+													<Input
+														id="modalConnectionUserId"
+														type="text"
+														placeholder="Enter username..."
+														value={connectionUserId}
+														onChange={(e) => {
+															setConnectionUserId(e.target.value);
+															setConnectionUserIdError(""); // Clear error when typing
+														}}
+														className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 pr-10"
+														disabled={
+															loadingMatches ||
+															validatingConnectionUserId ||
+															generatingUsername
+														}
+													/>
+													<Button
+														type="button"
+														onClick={generateUsername}
+														disabled={
+															loadingMatches ||
+															validatingConnectionUserId ||
+															generatingUsername
+														}
+														className="px-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white"
+														title="Generate username from interests"
+													>
+														{generatingUsername ? (
+															<div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+														) : (
+															"✨"
+														)}
+													</Button>
+													{(validatingConnectionUserId ||
+														generatingUsername) && (
+														<div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+															<div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+														</div>
+													)}
+												</div>
+												{connectionUserIdError && (
+													<p className="text-red-400 text-xs mt-1">
+														{connectionUserIdError}
+													</p>
 												)}
-											</Button>
+											</div>
+
+											<div className="flex gap-4">
+												<Button
+													onClick={findMatches}
+													disabled={
+														loadingMatches ||
+														!connectionUserId.trim() ||
+														validatingConnectionUserId ||
+														generatingUsername
+													}
+													className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white"
+												>
+													{loadingMatches ? (
+														<>
+															<div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+															Finding Your Tribe...
+														</>
+													) : (
+														"Find My Tribe 🤝"
+													)}
+												</Button>
+											</div>
+										</div>
+									</div>
+								) : insightResults.aiProfile ? (
+									<div className="text-center py-8">
+										<div className="bg-red-900/50 border border-red-700 rounded-lg p-6">
+											<h3 className="text-lg font-semibold text-red-300 mb-2">
+												Error Loading Profile
+											</h3>
+											<p className="text-red-400 text-sm">
+												There was an issue generating your profile. Please try
+												again.
+											</p>
+											<pre className="text-xs text-red-500 mt-4 overflow-auto max-h-32">
+												{JSON.stringify(insightResults.aiProfile, null, 2)}
+											</pre>
 										</div>
 									</div>
 								) : (
