@@ -1630,29 +1630,6 @@ const UserProfileScreen = ({
 		}
 	};
 
-	// Load taste profile on mount
-	useEffect(() => {
-		const loadTasteProfile = async () => {
-			try {
-				const response = await fetch("/api/get-taste-profile", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ userId }),
-				});
-				const result = await response.json();
-				if (result.success && result.data) {
-					setTasteProfile(result.data);
-				}
-			} catch (error) {
-				console.error("Error loading taste profile:", error);
-			}
-		};
-
-		if (userId) {
-			loadTasteProfile();
-		}
-	}, [userId]);
-
 	// Generate taste profile function
 	const generateTasteProfile = useCallback(async () => {
 		if (!userProfileData?.profile?.interests) {
@@ -1780,6 +1757,38 @@ const UserProfileScreen = ({
 			setLoadingTasteProfile(false);
 		}
 	}, [userProfileData, userId]);
+
+	// Load taste profile on mount and auto-generate if not found
+	useEffect(() => {
+		const loadTasteProfile = async () => {
+			try {
+				const response = await fetch("/api/get-taste-profile", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ userId }),
+				});
+				const result = await response.json();
+				if (result.success && result.data) {
+					setTasteProfile(result.data);
+				} else {
+					// If no taste profile exists and user has interests, auto-generate
+					if (
+						userProfileData?.profile?.interests &&
+						Object.keys(userProfileData.profile.interests).length > 0
+					) {
+						generateTasteProfile();
+					}
+				}
+			} catch (error) {
+				console.error("Error loading taste profile:", error);
+			}
+		};
+
+		if (userId) {
+			loadTasteProfile();
+		}
+	}, [userId, userProfileData?.profile?.interests, generateTasteProfile]);
+
 	return (
 		<div className="h-screen flex flex-col relative z-10 p-6">
 			<motion.div
@@ -2021,21 +2030,6 @@ const UserProfileScreen = ({
 															<div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
 														)}
 													</div>
-													{tasteProfile && (
-														<Button
-															onClick={generateTasteProfile}
-															disabled={loadingTasteProfile}
-															size="sm"
-															className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white"
-														>
-															{loadingTasteProfile ? (
-																<div className="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-															) : (
-																<span className="mr-2">🔄</span>
-															)}
-															Refresh
-														</Button>
-													)}
 												</div>
 
 												<div
@@ -2140,18 +2134,6 @@ const UserProfileScreen = ({
 																	? "Generating your taste profile..."
 																	: "Your taste profile will appear here once generated"}
 															</p>
-															{!loadingTasteProfile &&
-																userProfileData?.profile?.interests &&
-																Object.keys(userProfileData.profile.interests)
-																	.length > 0 && (
-																	<Button
-																		onClick={generateTasteProfile}
-																		className="bg-gradient-to-r from-pink-600 to-orange-600 hover:from-pink-500 hover:to-orange-500 text-white"
-																	>
-																		<span className="mr-2">✨</span>
-																		Generate Taste Profile
-																	</Button>
-																)}
 														</div>
 													)}
 												</div>
