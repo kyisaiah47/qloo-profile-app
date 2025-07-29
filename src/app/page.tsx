@@ -1900,23 +1900,29 @@ const UserProfileScreen = ({
 										<Button
 											onClick={handleFindMatches}
 											disabled={loadingMatches}
-											className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-lg font-semibold text-white"
+											className="flex-1 h-16 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 text-xl font-bold text-white shadow-2xl border-2 border-blue-400/50 hover:border-blue-300/70 transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 hover:shadow-blue-500/25"
 										>
 											{loadingMatches ? (
 												<>
-													<div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-													Finding Matches...
+													<div className="animate-spin w-6 h-6 border-3 border-white border-t-transparent rounded-full mr-3"></div>
+													<span className="text-xl">Finding Your Perfect Matches...</span>
 												</>
 											) : (
-												"See Your Matches 🤝"
+												<>
+													<span className="text-2xl mr-3">🤝</span>
+													<span className="bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent font-heading">
+														Find Your Tribe
+													</span>
+													<span className="text-2xl ml-3">✨</span>
+												</>
 											)}
 										</Button>
 										<Button
 											onClick={onEditProfile}
-											className="px-8 h-12 border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500"
+											className="px-8 h-16 border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500 transition-all duration-200"
 										>
-											<span className="mr-2">✏️</span>
-											Edit Profile
+											<span className="mr-2 text-lg">✏️</span>
+											<span className="text-lg">Edit Profile</span>
 										</Button>
 									</>
 								)}
