@@ -1641,6 +1641,21 @@ const UserProfileScreen = ({
 		}
 	};
 
+	// Handle profile update within UserProfileScreen
+	const handleProfileUpdate = async () => {
+		try {
+			await handleUpdateProfile();
+			// After successful update, switch to profile tab and regenerate taste profile
+			setActiveTab("profile");
+			// Small delay to ensure tab switch happens first
+			setTimeout(() => {
+				generateTasteProfile();
+			}, 100);
+		} catch (error) {
+			console.error("Error updating profile:", error);
+		}
+	};
+
 	// Generate taste profile function
 	const generateTasteProfile = useCallback(async () => {
 		if (!userProfileData?.profile?.interests) {
@@ -2258,7 +2273,7 @@ const UserProfileScreen = ({
 									</Button>
 								) : activeTab === "interests" ? (
 									<Button
-										onClick={handleUpdateProfile}
+										onClick={handleProfileUpdate}
 										disabled={isLoading}
 										className="flex-1 h-16 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-xl font-bold text-white shadow-2xl border-2 border-blue-400/50 hover:border-blue-300/70 transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 hover:shadow-blue-500/25"
 									>
