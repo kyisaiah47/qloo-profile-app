@@ -155,6 +155,7 @@ interface Match {
 	sharedFields: string[];
 	sharedEntities: Record<string, string[]>;
 	totalSharedItems: number;
+	compatibilityBlurb?: string;
 }
 
 const QLOO_TYPES = [
@@ -375,7 +376,49 @@ export default function ProfileForm() {
 			});
 
 			const result = await response.json();
-			setMatches(result.data || []);
+			const matches = result.data || [];
+
+			// Generate compatibility blurbs for each match
+			const matchesWithBlurbs = await Promise.all(
+				matches.map(async (match: Match) => {
+					try {
+						const compatibilityResponse = await fetch(
+							"/api/generate-compatibility",
+							{
+								method: "POST",
+								headers: {
+									"Content-Type": "application/json",
+								},
+								body: JSON.stringify({
+									currentUserInterests: formData,
+									matchUserProfile: match.user,
+									sharedEntities: match.sharedEntities,
+									matchScore: match.matchScore,
+								}),
+							}
+						);
+
+						const compatibilityResult = await compatibilityResponse.json();
+
+						return {
+							...match,
+							compatibilityBlurb: compatibilityResult.success
+								? compatibilityResult.data
+								: compatibilityResult.fallback ||
+								  "You share amazing interests - this looks like a great potential connection!",
+						};
+					} catch (error) {
+						console.error("Error generating compatibility blurb:", error);
+						return {
+							...match,
+							compatibilityBlurb:
+								"You share amazing interests - this looks like a great potential connection!",
+						};
+					}
+				})
+			);
+
+			setMatches(matchesWithBlurbs);
 			setShowMatches(true);
 			safeSetInsightResults({}); // Close the AI profile display
 		} catch (error) {
@@ -2617,6 +2660,25 @@ const ProfileFormScreen = ({
 														<p className="text-sm text-slate-300 mb-4 line-clamp-2">
 															{match.user.bio}
 														</p>
+
+														{/* AI-generated compatibility blurb */}
+														{match.compatibilityBlurb && (
+															<div className="mb-4 p-3 bg-gradient-to-r from-blue-600/10 to-purple-600/10 border border-blue-500/20 rounded-lg">
+																<div className="flex items-start gap-2">
+																	<span className="text-blue-400 text-sm">
+																		🤝
+																	</span>
+																	<div>
+																		<h5 className="text-xs font-medium text-blue-300 mb-1">
+																			Why you&apos;d connect:
+																		</h5>
+																		<p className="text-sm text-slate-200 leading-relaxed">
+																			{match.compatibilityBlurb}
+																		</p>
+																	</div>
+																</div>
+															</div>
+														)}
 
 														{/* Shared interests */}
 														<div className="space-y-3">
