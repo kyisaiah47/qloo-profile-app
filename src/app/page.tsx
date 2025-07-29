@@ -364,7 +364,7 @@ export default function ProfileForm() {
 			});
 
 			const result = await response.json();
-			setMatches(result.similarUsers || []);
+			setMatches(result.data || []);
 			setShowMatches(true);
 			safeSetInsightResults({}); // Close the AI profile display
 		} catch (error) {
