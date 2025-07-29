@@ -126,6 +126,14 @@ interface InsightItem {
 	};
 }
 
+interface AIProfile {
+	headline: string;
+	description: string;
+	vibe: string;
+	traits: string[];
+	compatibility: string;
+}
+
 const QLOO_TYPES = [
 	"artist",
 	"album",
@@ -196,7 +204,7 @@ export default function ProfileForm() {
 	const [showWelcome, setShowWelcome] = useState(true);
 	const [formData, setFormData] = useState<Record<string, string[]>>({});
 	const [insightResults, setInsightResults] = useState<
-		Record<string, InsightItem[]>
+		Record<string, InsightItem[]> & { aiProfile?: AIProfile }
 	>({});
 	const [userId, setUserId] = useState<string>("");
 	const [isLoading, setIsLoading] = useState(false);
@@ -292,8 +300,31 @@ export default function ProfileForm() {
 				setProfileSaved(true);
 				console.log("Profile saved successfully!", saveResult);
 
-				// Show insights
-				setInsightResults(insightMap);
+				// Generate AI profile description
+				try {
+					const aiResponse = await fetch("/api/generate-profile", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({
+							interests: formData,
+							insights: insightMap,
+						}),
+					});
+
+					const aiResult = await aiResponse.json();
+					if (aiResult.success) {
+						// Show the AI-generated profile instead of raw insights
+						setInsightResults({ aiProfile: aiResult.data }); // Using insights display for AI profile
+					} else {
+						console.error("Failed to generate AI profile:", aiResult.error);
+						// Fallback to showing insights if AI fails
+						setInsightResults(insightMap);
+					}
+				} catch (aiError) {
+					console.error("Error generating AI profile:", aiError);
+					// Fallback to showing insights if AI fails
+					setInsightResults(insightMap);
+				}
 			} else {
 				console.error("Failed to save profile:", saveResult.error);
 				alert("Failed to save profile. Please try again.");
@@ -472,10 +503,12 @@ const WelcomeScreen = ({ onGetStarted }: { onGetStarted: () => void }) => {
 
 interface ProfileFormScreenProps {
 	formData: Record<string, string[]>;
-	insightResults: Record<string, InsightItem[]>;
+	insightResults: Record<string, InsightItem[]> & { aiProfile?: AIProfile };
 	handleChange: (type: string, values: string[]) => void;
 	handleSubmit: (e: React.FormEvent) => Promise<void>;
-	setInsightResults: (results: Record<string, InsightItem[]>) => void;
+	setInsightResults: (
+		results: Record<string, InsightItem[]> & { aiProfile?: AIProfile }
+	) => void;
 	isLoading: boolean;
 	profileSaved: boolean;
 	userId: string;
@@ -615,7 +648,7 @@ const ProfileFormScreen = ({
 					</Card>
 				</motion.form>
 
-				{/* Display insights in overlay */}
+				{/* Display AI Profile in overlay */}
 				{Object.keys(insightResults).length > 0 && (
 					<motion.div
 						initial={{ opacity: 0 }}
@@ -628,7 +661,7 @@ const ProfileFormScreen = ({
 							initial={{ scale: 0.9, opacity: 0 }}
 							animate={{ scale: 1, opacity: 1 }}
 							transition={{ duration: 0.3 }}
-							className="bg-slate-800 rounded-lg shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden border border-slate-700"
+							className="bg-slate-800 rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-slate-700"
 							onClick={(e) => e.stopPropagation()}
 						>
 							<div className="p-6 border-b border-slate-700 flex items-center justify-between">
@@ -645,78 +678,90 @@ const ProfileFormScreen = ({
 								</Button>
 							</div>
 
-							<div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-								<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-									{Object.entries(insightResults).map(([type, results]) => (
-										<div
-											key={type}
-											className="space-y-3"
-										>
-											<h3 className="text-lg font-semibold capitalize text-slate-300 flex items-center gap-2">
-												{getTypeEmoji(type)}
-												{type.replace("_", " ")} Recommendations
-											</h3>
-											<div className="space-y-2">
-												{Array.isArray(results) && results.length > 0 ? (
-													(() => {
-														console.log(`Results for ${type}:`, results);
-														console.log(`First item structure:`, results[0]);
-														return results.slice(0, 5).map((item) => {
-															console.log(`Individual item for ${type}:`, item);
-															return (
-																<Card
-																	key={item.entity_id}
-																	className="p-3 hover:shadow-lg transition-shadow bg-slate-700 border-slate-600"
-																>
-																	<div className="flex items-center justify-between">
-																		<div className="flex-1 min-w-0">
-																			<p className="font-medium text-sm text-slate-200 truncate">
-																				{item.name}
-																			</p>
-																			<p className="text-xs text-slate-400">
-																				Score:{" "}
-																				{(
-																					item.popularity ||
-																					item.query?.affinity ||
-																					0
-																				).toFixed(1)}
-																			</p>
-																		</div>
-																		<div className="flex text-xs">
-																			{[...Array(5)].map((_, i) => {
-																				const score =
-																					item.popularity ||
-																					(item.query?.affinity
-																						? item.query.affinity * 100
-																						: 0);
-																				return (
-																					<span
-																						key={i}
-																						className={`${
-																							i < Math.floor(score / 20)
-																								? "text-yellow-400"
-																								: "text-slate-600"
-																						}`}
-																					>
-																						★
-																					</span>
-																				);
-																			})}
-																		</div>
-																	</div>
-																</Card>
-															);
-														});
-													})()
-												) : (
-													<p className="text-sm text-slate-500">
-														No recommendations found
-													</p>
-												)}
+							<div className="p-8 overflow-y-auto max-h-[calc(90vh-120px)]">
+								{insightResults.aiProfile ? (
+									<div className="space-y-6">
+										{/* Main Profile Section */}
+										<div className="text-center space-y-4">
+											<div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full text-3xl mb-4">
+												✨
+											</div>
+											<h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+												{insightResults.aiProfile.headline}
+											</h1>
+											<div className="inline-block px-4 py-2 bg-slate-700 rounded-full">
+												<span className="text-sm font-medium text-blue-300">
+													{insightResults.aiProfile.vibe}
+												</span>
 											</div>
 										</div>
-									))}
-								</div>
+
+										{/* Description */}
+										<Card className="bg-slate-700 border-slate-600">
+											<CardContent className="p-6">
+												<h3 className="text-lg font-semibold text-slate-200 mb-3">
+													About You
+												</h3>
+												<p className="text-slate-300 leading-relaxed">
+													{insightResults.aiProfile.description}
+												</p>
+											</CardContent>
+										</Card>
+
+										{/* Traits */}
+										<Card className="bg-slate-700 border-slate-600">
+											<CardContent className="p-6">
+												<h3 className="text-lg font-semibold text-slate-200 mb-4">
+													Your Vibe
+												</h3>
+												<div className="flex flex-wrap gap-2">
+													{insightResults.aiProfile.traits.map(
+														(trait: string, index: number) => (
+															<span
+																key={index}
+																className="px-3 py-1 bg-blue-600/20 text-blue-300 rounded-full text-sm font-medium border border-blue-500/30"
+															>
+																{trait}
+															</span>
+														)
+													)}
+												</div>
+											</CardContent>
+										</Card>
+
+										{/* Compatibility */}
+										<Card className="bg-slate-700 border-slate-600">
+											<CardContent className="p-6">
+												<h3 className="text-lg font-semibold text-slate-200 mb-3">
+													Who You&apos;ll Vibe With
+												</h3>
+												<p className="text-slate-300 leading-relaxed">
+													{insightResults.aiProfile.compatibility}
+												</p>
+											</CardContent>
+										</Card>
+
+										{/* Action Buttons */}
+										<div className="flex gap-4 pt-4">
+											<Button className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500">
+												Find My Tribe 🤝
+											</Button>
+											<Button
+												variant="outline"
+												className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700"
+											>
+												Share Profile 📤
+											</Button>
+										</div>
+									</div>
+								) : (
+									<div className="text-center py-8">
+										<div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+										<p className="text-slate-400">
+											Generating your unique profile...
+										</p>
+									</div>
+								)}
 							</div>
 						</motion.div>
 					</motion.div>
