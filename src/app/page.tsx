@@ -849,7 +849,14 @@ Please respond with ONLY the username, nothing else.`;
 
 			{showWelcome ? (
 				<WelcomeScreen
-					onGetStarted={() => setShowWelcome(false)}
+					onGetStarted={() => {
+						// Clear form data for fresh profile creation
+						setFormData({});
+						setInsightResults({});
+						setUserId("");
+						setProfileSaved(false);
+						setShowWelcome(false);
+					}}
 					onLogin={() => {
 						setShowWelcome(false);
 						setShowLogin(true);
@@ -919,11 +926,16 @@ Please respond with ONLY the username, nothing else.`;
 						setShowProfile(true);
 					}}
 					onLogout={() => {
+						// Clear all data for clean session
 						setIsLoggedIn(false);
 						setShowUserProfile(false);
 						setShowWelcome(true);
 						setUserId("");
 						setUserProfileData(null);
+						setFormData({});
+						setInsightResults({});
+						setMatches([]);
+						setProfileSaved(false);
 					}}
 				/>
 			) : (
