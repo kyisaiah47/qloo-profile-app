@@ -27,7 +27,7 @@ const ChipInput: React.FC<ChipInputProps> = ({
 	const addValue = (value: string) => {
 		const trimmedValue = value.trim();
 		if (trimmedValue && !values.includes(trimmedValue)) {
-			onChange([...values, trimmedValue]);
+			onChange([...(values || []), trimmedValue]);
 		}
 	};
 
@@ -48,10 +48,10 @@ const ChipInput: React.FC<ChipInputProps> = ({
 			const newValues = value
 				.split(/[,\s\t]+/)
 				.map((v) => v.trim())
-				.filter((v) => v && !values.includes(v));
+				.filter((v) => v && !(values || []).includes(v));
 
 			if (newValues.length > 0) {
-				onChange([...values, ...newValues]);
+				onChange([...(values || []), ...newValues]);
 			}
 			setInputValue("");
 		} else {
@@ -66,8 +66,12 @@ const ChipInput: React.FC<ChipInputProps> = ({
 				addValue(inputValue);
 				setInputValue("");
 			}
-		} else if (e.key === "Backspace" && !inputValue && values.length > 0) {
-			removeValue(values.length - 1);
+		} else if (
+			e.key === "Backspace" &&
+			!inputValue &&
+			(values || []).length > 0
+		) {
+			removeValue((values || []).length - 1);
 		}
 	};
 
@@ -77,7 +81,7 @@ const ChipInput: React.FC<ChipInputProps> = ({
 			onClick={() => inputRef.current?.focus()}
 		>
 			<div className="flex flex-wrap gap-1 items-center">
-				{values.map((value, index) => (
+				{(values || []).map((value, index) => (
 					<motion.div
 						key={`${value}-${index}`}
 						initial={{ opacity: 0, scale: 0.8 }}
@@ -105,7 +109,7 @@ const ChipInput: React.FC<ChipInputProps> = ({
 					value={inputValue}
 					onChange={handleInputChange}
 					onKeyDown={handleKeyDown}
-					placeholder={values.length === 0 ? placeholder : ""}
+					placeholder={(values || []).length === 0 ? placeholder : ""}
 					className="flex-1 min-w-[120px] bg-transparent border-none outline-none text-slate-200 placeholder:text-slate-400 text-sm"
 				/>
 			</div>
@@ -240,8 +244,20 @@ export default function ProfileForm() {
 								}),
 							});
 							const insights = await insightRes.json();
+							console.log(
+								`Qloo insights response for ${entity.entity_id}:`,
+								insights
+							);
 							const insightResults = insights?.data?.results ?? [];
-							typeInsights.push(...insightResults);
+							// Ensure insightResults is an array before spreading
+							if (Array.isArray(insightResults)) {
+								typeInsights.push(...insightResults);
+							} else {
+								console.warn(
+									`Insights results is not an array for ${type}:`,
+									insightResults
+								);
+							}
 						}
 					}
 				}
