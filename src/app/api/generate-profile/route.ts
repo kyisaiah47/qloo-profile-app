@@ -48,26 +48,68 @@ export async function POST(request: NextRequest) {
 		let prompt = customPrompt;
 
 		if (!customPrompt) {
+			// Count interests to understand the user's breadth
+			const totalInterests = Object.values(interests).flat().length;
+			const categoryCount = Object.keys(interests).length;
+
+			// Extract specific examples for more context
+			const specificInterests = Object.entries(interests)
+				.filter(([, values]) => Array.isArray(values) && values.length > 0)
+				.map(([category, values]) => ({
+					category,
+					items: (values as string[]).slice(0, 3),
+					count: (values as string[]).length,
+				}));
+
+			// Create unique identifiers based on their specific interests
+			const dominantCategories = specificInterests
+				.sort((a, b) => b.count - a.count)
+				.slice(0, 3)
+				.map((cat) => cat.category);
+
+			const uniqueCombination = specificInterests
+				.flatMap((cat) => cat.items)
+				.slice(0, 8)
+				.join(", ");
+
 			prompt = `
-Based on the following user interests and AI-generated recommendations, create a compelling and personalized profile description. Be creative, engaging, and capture their unique vibe:
+You are creating a highly personalized taste profile for someone with these SPECIFIC interests. Make this profile UNIQUE and avoid generic language.
 
-USER INTERESTS:
-${interestsText}
+DETAILED INTEREST BREAKDOWN:
+${specificInterests
+	.map(
+		(cat) =>
+			`${cat.category.toUpperCase()} (${cat.count} items): ${cat.items.join(
+				", "
+			)}`
+	)
+	.join("\n")}
 
-AI RECOMMENDATIONS:
+AI PERSONALIZATION DATA:
 ${insightsText}
 
-Please generate a response in the following JSON format:
+UNIQUENESS FACTORS:
+- Total interests: ${totalInterests} across ${categoryCount} categories
+- Dominant areas: ${dominantCategories.join(", ")}
+- Unique combination: ${uniqueCombination}
+
+Create a DISTINCTIVE profile that captures THIS SPECIFIC person's taste, not a generic template. Consider:
+1. What makes their combination of interests unusual or interesting?
+2. What personality type would have EXACTLY these tastes?
+3. What subcultural niches do they bridge?
+4. What does their breadth vs depth say about them?
+
+Generate a JSON response with these fields:
 {
-  "headline": "A catchy 3-8 word headline that captures their vibe (e.g., 'The Eclectic Music Adventurer', 'Retro Soul with Modern Edge')",
-  "description": "A 2-3 sentence engaging description of their personality based on their tastes",
-  "vibe": "One word that best describes their overall aesthetic/personality (e.g., 'Sophisticated', 'Adventurous', 'Nostalgic', 'Eclectic')",
-  "traits": ["3-5 personality traits as short phrases based on their interests"],
-  "compatibility": "A sentence about what kind of people they'd vibe with",
-  "emoji": "A single emoji that best represents their personality and interests (e.g., 🎨 for creative types, 🌟 for adventurous spirits, 📚 for bookworms, 🎵 for music lovers, etc.)"
+  "headline": "A unique 4-8 word headline based on THEIR SPECIFIC combination (not generic like 'Music Lover' - be creative and specific)",
+  "description": "2-3 sentences that feel like they were written FOR THIS SPECIFIC PERSON based on their exact tastes",
+  "vibe": "One distinctive word that captures THEIR unique aesthetic (avoid common words like 'eclectic' - be more specific)",
+  "traits": ["4-5 specific personality traits that someone with THESE EXACT interests would have"],
+  "compatibility": "Who would connect with someone who has THIS SPECIFIC combination of interests",
+  "emoji": "An emoji that represents THEIR unique combination, not just one category"
 }
 
-Make it feel authentic and avoid generic descriptions. Focus on the unique combination of their interests to create something memorable and personal.`;
+CRITICAL: Make this feel like a custom-written profile, not a template. Reference their specific taste combination.`;
 		}
 
 		// Get AI model
