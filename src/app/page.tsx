@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useRef, KeyboardEvent, useEffect } from "react";
+import React, {
+	useState,
+	useRef,
+	KeyboardEvent,
+	useEffect,
+	useCallback,
+} from "react";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -245,6 +251,8 @@ export default function ProfileForm() {
 	const [validatingConnectionUserId, setValidatingConnectionUserId] =
 		useState(false);
 	const [generatingUsername, setGeneratingUsername] = useState(false);
+	const [tasteProfile, setTasteProfile] = useState<AIProfile | null>(null);
+	const [loadingTasteProfile, setLoadingTasteProfile] = useState(false);
 
 	// Debug useEffect to track insightResults changes
 	useEffect(() => {
@@ -265,6 +273,16 @@ export default function ProfileForm() {
 		}
 		console.log("=== END DEBUG ===");
 	}, [insightResults]);
+
+	// Generate taste profile when formData changes
+	useEffect(() => {
+		const hasInterests = Object.values(formData).some(
+			(values) => values && values.length > 0
+		);
+		if (hasInterests && userId) {
+			generateTasteProfile();
+		}
+	}, [formData, userId]);
 
 	// Safe wrapper for setInsightResults to prevent error objects from being set
 	const safeSetInsightResults = (
@@ -511,6 +529,79 @@ Please respond with ONLY the username, nothing else.`;
 		}
 	};
 
+	const generateTasteProfile = useCallback(async () => {
+		setLoadingTasteProfile(true);
+		try {
+			const resolvedEntities: Record<string, InsightItem[]> = {};
+			const insightMap: Record<string, InsightItem[]> = {};
+
+			// Process Qloo API calls for current interests
+			for (const type of QLOO_TYPES) {
+				const values = formData[type];
+				if (!values || values.length === 0) continue;
+
+				const typeEntities: InsightItem[] = [];
+				const typeInsights: InsightItem[] = [];
+
+				for (const value of values) {
+					const res = await fetch("/api/qloo-search", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ query: value, type }),
+					});
+
+					const json = await res.json();
+					const entity = json.data?.results?.[0];
+					if (entity) {
+						typeEntities.push(entity);
+
+						if (entity?.entity_id) {
+							const insightRes = await fetch("/api/qloo-insights", {
+								method: "POST",
+								headers: { "Content-Type": "application/json" },
+								body: JSON.stringify({
+									entityId: entity.entity_id,
+									type,
+									filterType: "brand",
+									take: 5,
+								}),
+							});
+							const insights = await insightRes.json();
+							const insightResults = insights?.data?.results?.entities ?? [];
+							if (Array.isArray(insightResults)) {
+								typeInsights.push(...insightResults);
+							}
+						}
+					}
+				}
+
+				if (typeEntities.length > 0) {
+					resolvedEntities[type] = typeEntities;
+					insightMap[type] = typeInsights;
+				}
+			}
+
+			// Generate AI profile
+			const aiResponse = await fetch("/api/generate-profile", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					interests: formData,
+					insights: insightMap,
+				}),
+			});
+
+			const aiResult = await aiResponse.json();
+			if (aiResult.success && aiResult.data && aiResult.data.headline) {
+				setTasteProfile(aiResult.data);
+			}
+		} catch (error) {
+			console.error("Error generating taste profile:", error);
+		} finally {
+			setLoadingTasteProfile(false);
+		}
+	}, [formData]);
+
 	const handleUserIdUpdate = async () => {
 		if (!newUserId.trim()) {
 			setUserIdError("User ID cannot be empty");
@@ -627,6 +718,10 @@ Please respond with ONLY the username, nothing else.`;
 
 			if (updateResult.success) {
 				console.log("Profile updated successfully!", updateResult);
+
+				// Refresh taste profile with new interests
+				await generateTasteProfile();
+
 				setShowProfile(false);
 
 				// Refresh user profile data if logged in
@@ -816,6 +911,36 @@ Please respond with ONLY the username, nothing else.`;
 
 	return (
 		<div className="h-screen w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+			{/* Global scrollbar theming */}
+			<style
+				dangerouslySetInnerHTML={{
+					__html: `
+					/* Global scrollbar styles */
+					* {
+						scrollbar-width: thin;
+						scrollbar-color: rgb(71 85 105) rgb(30 41 59);
+					}
+					*::-webkit-scrollbar {
+						width: 8px;
+						height: 8px;
+					}
+					*::-webkit-scrollbar-track {
+						background: rgb(30 41 59);
+						border-radius: 4px;
+					}
+					*::-webkit-scrollbar-thumb {
+						background: rgb(71 85 105);
+						border-radius: 4px;
+					}
+					*::-webkit-scrollbar-thumb:hover {
+						background: rgb(100 116 139);
+					}
+					*::-webkit-scrollbar-corner {
+						background: rgb(30 41 59);
+					}
+				`,
+				}}
+			/>
 			{/* Subtle background elements */}
 			<div className="absolute inset-0 overflow-hidden">
 				<motion.div
@@ -923,17 +1048,17 @@ Please respond with ONLY the username, nothing else.`;
 					className="fixed inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 z-50 flex flex-col"
 				>
 					{/* Header */}
-					<div className="bg-slate-800/95 backdrop-blur-sm border-b border-slate-700 p-6 flex-shrink-0">
+					<div className="bg-slate-800/95 backdrop-blur-sm border-b border-slate-700 p-4 flex-shrink-0">
 						<div className="max-w-6xl mx-auto flex items-center justify-between">
 							<div className="flex items-center gap-3">
-								<div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-									<span className="text-xl">⚙️</span>
+								<div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+									<span className="text-lg">⚙️</span>
 								</div>
 								<div>
-									<h1 className="text-2xl font-bold text-slate-200">
+									<h1 className="text-xl font-bold text-slate-200">
 										Profile Settings
 									</h1>
-									<p className="text-sm text-slate-400">
+									<p className="text-xs text-slate-400">
 										Manage your profile and preferences
 									</p>
 								</div>
@@ -955,24 +1080,24 @@ Please respond with ONLY the username, nothing else.`;
 					</div>
 
 					{/* Content */}
-					<div className="flex-1 overflow-y-auto p-6 min-h-0">
-						<div className="max-w-6xl mx-auto space-y-8 pb-8">
+					<div className="flex-1 overflow-y-auto p-4 min-h-0">
+						<div className="max-w-6xl mx-auto space-y-6 pb-4">
 							{/* Personal Info Section */}
 							<Card className="bg-slate-800/50 border-slate-700">
-								<CardContent className="p-8">
-									<div className="flex items-center gap-3 mb-6">
-										<div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
-											<span className="text-sm">👤</span>
+								<CardContent className="p-6">
+									<div className="flex items-center gap-3 mb-4">
+										<div className="w-6 h-6 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
+											<span className="text-xs">👤</span>
 										</div>
-										<h2 className="text-xl font-semibold text-slate-200">
+										<h2 className="text-lg font-semibold text-slate-200">
 											Personal Information
 										</h2>
 									</div>
 
-									<div className="grid md:grid-cols-2 gap-8">
+									<div className="grid md:grid-cols-2 gap-6">
 										{/* User ID Section */}
-										<div className="space-y-4">
-											<h3 className="text-lg font-medium text-slate-200">
+										<div className="space-y-3">
+											<h3 className="text-base font-medium text-slate-200">
 												User ID
 											</h3>
 											{editingUserId ? (
@@ -1036,8 +1161,8 @@ Please respond with ONLY the username, nothing else.`;
 										</div>
 
 										{/* Personal Blurb Section */}
-										<div className="space-y-4">
-											<h3 className="text-lg font-medium text-slate-200">
+										<div className="space-y-3">
+											<h3 className="text-base font-medium text-slate-200">
 												Personal Blurb
 											</h3>
 											<div className="space-y-3">
@@ -1050,7 +1175,7 @@ Please respond with ONLY the username, nothing else.`;
 												<textarea
 													id="personal-blurb"
 													placeholder="Write a short description about yourself, your interests, or what you're looking for in connections..."
-													className="w-full h-32 p-4 bg-slate-700 border border-slate-600 rounded-lg text-slate-200 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none transition-all"
+													className="w-full h-24 p-3 bg-slate-700 border border-slate-600 rounded-lg text-slate-200 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none transition-all"
 												/>
 												<div className="flex justify-between items-center">
 													<p className="text-xs text-slate-400">
@@ -1071,20 +1196,20 @@ Please respond with ONLY the username, nothing else.`;
 
 							{/* Interests Section */}
 							<Card className="bg-slate-800/50 border-slate-700">
-								<CardContent className="p-8">
-									<div className="flex items-center gap-3 mb-6">
-										<div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-											<span className="text-sm">🎯</span>
+								<CardContent className="p-6">
+									<div className="flex items-center gap-3 mb-4">
+										<div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+											<span className="text-xs">🎯</span>
 										</div>
-										<h2 className="text-xl font-semibold text-slate-200">
+										<h2 className="text-lg font-semibold text-slate-200">
 											Update Your Interests
 										</h2>
 									</div>
-									<p className="text-slate-400 mb-6">
+									<p className="text-slate-400 mb-4">
 										Modify your interests to find better matches
 									</p>
 
-									<div className="space-y-6">
+									<div className="space-y-4">
 										{QLOO_TYPES.map((type) => (
 											<div
 												key={type}
@@ -1110,7 +1235,7 @@ Please respond with ONLY the username, nothing else.`;
 										))}
 									</div>
 
-									<div className="mt-8 flex gap-4">
+									<div className="mt-6 flex gap-4">
 										<Button
 											onClick={handleUpdateProfile}
 											disabled={isLoading}
@@ -1129,6 +1254,150 @@ Please respond with ONLY the username, nothing else.`;
 											)}
 										</Button>
 									</div>
+								</CardContent>
+							</Card>
+
+							{/* Taste Profile Section */}
+							<Card className="bg-slate-800/50 border-slate-700">
+								<CardContent className="p-6">
+									<div className="flex items-center gap-3 mb-4">
+										<div className="w-6 h-6 bg-gradient-to-r from-pink-500 to-orange-500 rounded-full flex items-center justify-center">
+											<span className="text-xs">✨</span>
+										</div>
+										<h2 className="text-lg font-semibold text-slate-200">
+											Your Taste Profile
+										</h2>
+										{loadingTasteProfile && (
+											<div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+										)}
+									</div>
+									<p className="text-slate-400 mb-4">
+										AI-generated insights based on your interests
+									</p>
+
+									<div
+										className="max-h-80 overflow-y-auto pr-2 taste-profile-scroll"
+										style={{
+											scrollbarWidth: "thin",
+											scrollbarColor: "rgb(71 85 105) rgb(30 41 59)",
+										}}
+									>
+										<style
+											dangerouslySetInnerHTML={{
+												__html: `
+												.taste-profile-scroll::-webkit-scrollbar {
+													width: 6px;
+												}
+												.taste-profile-scroll::-webkit-scrollbar-track {
+													background: rgb(30 41 59);
+													border-radius: 3px;
+												}
+												.taste-profile-scroll::-webkit-scrollbar-thumb {
+													background: rgb(71 85 105);
+													border-radius: 3px;
+												}
+												.taste-profile-scroll::-webkit-scrollbar-thumb:hover {
+													background: rgb(100 116 139);
+												}
+											`,
+											}}
+										/>
+										{tasteProfile ? (
+											<div className="space-y-4">
+												{/* Headline */}
+												<div className="p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg border border-blue-500/20">
+													<h3 className="text-blue-400 font-semibold mb-2">
+														Headline
+													</h3>
+													<p className="text-slate-200">
+														{tasteProfile.headline}
+													</p>
+												</div>
+
+												{/* Description */}
+												<div className="p-4 bg-gradient-to-r from-green-500/10 to-teal-500/10 rounded-lg border border-green-500/20">
+													<h3 className="text-green-400 font-semibold mb-2">
+														Description
+													</h3>
+													<p className="text-slate-200">
+														{tasteProfile.description}
+													</p>
+												</div>
+
+												{/* Vibe */}
+												{tasteProfile.vibe && (
+													<div className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
+														<h3 className="text-purple-400 font-semibold mb-2">
+															Vibe
+														</h3>
+														<p className="text-slate-200">
+															{tasteProfile.vibe}
+														</p>
+													</div>
+												)}
+
+												{/* Traits */}
+												{tasteProfile.traits &&
+													Array.isArray(tasteProfile.traits) && (
+														<div className="p-4 bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-lg border border-orange-500/20">
+															<h3 className="text-orange-400 font-semibold mb-2">
+																Key Traits
+															</h3>
+															<div className="flex flex-wrap gap-2">
+																{tasteProfile.traits.map(
+																	(trait: string, index: number) => (
+																		<span
+																			key={index}
+																			className="px-3 py-1 bg-orange-500/20 text-orange-300 rounded-full text-sm"
+																		>
+																			{trait}
+																		</span>
+																	)
+																)}
+															</div>
+														</div>
+													)}
+
+												{/* Compatibility */}
+												{tasteProfile.compatibility && (
+													<div className="p-4 bg-gradient-to-r from-indigo-500/10 to-blue-500/10 rounded-lg border border-indigo-500/20">
+														<h3 className="text-indigo-400 font-semibold mb-2">
+															Compatibility
+														</h3>
+														<p className="text-slate-200">
+															{tasteProfile.compatibility}
+														</p>
+													</div>
+												)}
+											</div>
+										) : (
+											<div className="text-center py-8">
+												<p className="text-slate-400">
+													{loadingTasteProfile
+														? "Generating your taste profile..."
+														: "Add some interests to generate your taste profile"}
+												</p>
+											</div>
+										)}
+									</div>
+
+									{tasteProfile && (
+										<div className="mt-4 flex justify-end">
+											<Button
+												onClick={generateTasteProfile}
+												disabled={loadingTasteProfile}
+												size="sm"
+												className="bg-gradient-to-r from-pink-600 to-orange-600 hover:from-pink-500 hover:to-orange-500 text-white"
+											>
+												{loadingTasteProfile ? (
+													<div className="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+												) : (
+													<span className="mr-2">🔄</span>
+												)}
+												Refresh Profile
+											</Button>
+										</div>
+									)}
 								</CardContent>
 							</Card>
 						</div>
