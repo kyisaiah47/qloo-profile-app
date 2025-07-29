@@ -4,6 +4,7 @@ import React, { useState, useRef, KeyboardEvent } from "react";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
 
 interface ChipInputProps {
@@ -228,6 +229,10 @@ export default function ProfileForm() {
 	const [matches, setMatches] = useState<Match[]>([]);
 	const [showMatches, setShowMatches] = useState(false);
 	const [loadingMatches, setLoadingMatches] = useState(false);
+	const [showProfile, setShowProfile] = useState(false);
+	const [editingUserId, setEditingUserId] = useState(false);
+	const [newUserId, setNewUserId] = useState("");
+	const [userIdError, setUserIdError] = useState("");
 
 	const handleChange = (type: string, values: string[]) => {
 		setFormData({ ...formData, [type]: values });
@@ -258,6 +263,65 @@ export default function ProfileForm() {
 			console.error("Error finding matches:", error);
 		} finally {
 			setLoadingMatches(false);
+		}
+	};
+
+	const checkUserIdUnique = async (testUserId: string) => {
+		try {
+			const response = await fetch("/api/check-user-id", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ userId: testUserId }),
+			});
+
+			const result = await response.json();
+			return !result.exists;
+		} catch (error) {
+			console.error("Error checking user ID:", error);
+			return false;
+		}
+	};
+
+	const handleUserIdUpdate = async () => {
+		if (!newUserId.trim()) {
+			setUserIdError("User ID cannot be empty");
+			return;
+		}
+
+		if (newUserId === userId) {
+			setEditingUserId(false);
+			setUserIdError("");
+			return;
+		}
+
+		const isUnique = await checkUserIdUnique(newUserId);
+		if (!isUnique) {
+			setUserIdError("This User ID is already taken");
+			return;
+		}
+
+		try {
+			const response = await fetch("/api/update-user-id", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ oldUserId: userId, newUserId }),
+			});
+
+			const result = await response.json();
+			if (result.success) {
+				setUserId(newUserId);
+				setEditingUserId(false);
+				setUserIdError("");
+			} else {
+				setUserIdError(result.error || "Failed to update User ID");
+			}
+		} catch (error) {
+			console.error("Error updating user ID:", error);
+			setUserIdError("Failed to update User ID");
 		}
 	};
 
@@ -431,7 +495,190 @@ export default function ProfileForm() {
 					matches={matches}
 					showMatches={showMatches}
 					setShowMatches={setShowMatches}
+					setShowProfile={setShowProfile}
 				/>
+			)}
+
+			{/* Profile Management Screen */}
+			{showProfile && (
+				<motion.div
+					initial={{ opacity: 0 }}
+					animate={{ opacity: 1 }}
+					transition={{ duration: 0.3 }}
+					className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+					onClick={() => setShowProfile(false)}
+				>
+					<motion.div
+						initial={{ scale: 0.9, opacity: 0 }}
+						animate={{ scale: 1, opacity: 1 }}
+						transition={{ duration: 0.3 }}
+						className="bg-slate-800 rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-slate-700"
+						onClick={(e) => e.stopPropagation()}
+					>
+						<div className="p-6 border-b border-slate-700 flex items-center justify-between">
+							<h2 className="text-2xl font-bold text-slate-200">
+								Profile Settings ⚙️
+							</h2>
+							<Button
+								variant="ghost"
+								size="sm"
+								onClick={() => setShowProfile(false)}
+								className="text-slate-400 hover:text-slate-200"
+							>
+								✕
+							</Button>
+						</div>
+
+						<div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+							<div className="space-y-8">
+								{/* User ID Section */}
+								<Card className="bg-slate-700 border-slate-600">
+									<CardContent className="p-6">
+										<h3 className="text-lg font-semibold text-slate-200 mb-4">
+											User ID
+										</h3>
+										<div className="space-y-4">
+											{editingUserId ? (
+												<div className="space-y-3">
+													<div>
+														<Label
+															htmlFor="user-id-input"
+															className="text-slate-300"
+														>
+															New User ID
+														</Label>
+														<Input
+															id="user-id-input"
+															value={newUserId}
+															onChange={(e) => {
+																setNewUserId(e.target.value);
+																setUserIdError("");
+															}}
+															placeholder="Enter your new User ID"
+															className="bg-slate-600 border-slate-500 text-slate-200"
+														/>
+														{userIdError && (
+															<p className="text-red-400 text-sm">
+																{userIdError}
+															</p>
+														)}
+													</div>
+													<div className="flex gap-2">
+														<Button
+															onClick={handleUserIdUpdate}
+															size="sm"
+															className="bg-blue-600 hover:bg-blue-500"
+														>
+															Save
+														</Button>
+														<Button
+															onClick={() => {
+																setEditingUserId(false);
+																setNewUserId("");
+																setUserIdError("");
+															}}
+															variant="outline"
+															size="sm"
+															className="border-slate-600 text-slate-300"
+														>
+															Cancel
+														</Button>
+													</div>
+												</div>
+											) : (
+												<div className="flex items-center justify-between">
+													<div>
+														<p className="text-slate-300 font-mono">{userId}</p>
+														<p className="text-sm text-slate-400">
+															This is your unique identifier
+														</p>
+													</div>
+													<Button
+														onClick={() => {
+															setEditingUserId(true);
+															setNewUserId(userId);
+														}}
+														variant="outline"
+														size="sm"
+														className="border-slate-600 text-slate-300"
+													>
+														Edit
+													</Button>
+												</div>
+											)}
+										</div>
+									</CardContent>
+								</Card>
+
+								{/* Interests Section */}
+								<Card className="bg-slate-700 border-slate-600">
+									<CardContent className="p-6">
+										<h3 className="text-lg font-semibold text-slate-200 mb-4">
+											Update Your Interests
+										</h3>
+										<p className="text-sm text-slate-400 mb-6">
+											Modify your interests to find better matches
+										</p>
+
+										<div className="space-y-6">
+											{QLOO_TYPES.map((type) => (
+												<div
+													key={type}
+													className="space-y-2"
+												>
+													<Label
+														htmlFor={type}
+														className="text-sm font-medium text-slate-300 flex items-center gap-2"
+													>
+														{getTypeEmoji(type)}
+														<span className="capitalize">
+															{type.replace("_", " ")}
+														</span>
+													</Label>
+													<ChipInput
+														id={type}
+														values={formData[type] || []}
+														onChange={(values) => handleChange(type, values)}
+														placeholder={getPlaceholder(type)}
+														className="w-full"
+													/>
+												</div>
+											))}
+										</div>
+
+										<div className="mt-8 flex gap-4">
+											<Button
+												onClick={(e) => {
+													e.preventDefault();
+													handleSubmit(e);
+													setShowProfile(false);
+												}}
+												disabled={isLoading}
+												className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500"
+											>
+												{isLoading ? (
+													<>
+														<div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+														Updating Profile...
+													</>
+												) : (
+													"Update Profile 🔄"
+												)}
+											</Button>
+											<Button
+												onClick={() => setShowProfile(false)}
+												variant="outline"
+												className="border-slate-600 text-slate-300"
+											>
+												Cancel
+											</Button>
+										</div>
+									</CardContent>
+								</Card>
+							</div>
+						</div>
+					</motion.div>
+				</motion.div>
 			)}
 		</div>
 	);
@@ -569,6 +816,7 @@ interface ProfileFormScreenProps {
 	matches: Match[];
 	showMatches: boolean;
 	setShowMatches: (show: boolean) => void;
+	setShowProfile: (show: boolean) => void;
 }
 
 const ProfileFormScreen = ({
@@ -585,6 +833,7 @@ const ProfileFormScreen = ({
 	matches,
 	showMatches,
 	setShowMatches,
+	setShowProfile,
 }: ProfileFormScreenProps) => {
 	return (
 		<div className="h-full flex flex-col relative z-10 p-6">
@@ -854,14 +1103,27 @@ const ProfileFormScreen = ({
 								<h2 className="text-2xl font-bold text-slate-200">
 									Your Taste Tribe ✨
 								</h2>
-								<Button
-									variant="ghost"
-									size="sm"
-									onClick={() => setShowMatches(false)}
-									className="text-slate-400 hover:text-slate-200"
-								>
-									✕
-								</Button>
+								<div className="flex items-center gap-3">
+									<Button
+										variant="outline"
+										size="sm"
+										onClick={() => {
+											setShowMatches(false);
+											setShowProfile(true);
+										}}
+										className="text-slate-300 border-slate-600 hover:bg-slate-700"
+									>
+										Edit Profile ⚙️
+									</Button>
+									<Button
+										variant="ghost"
+										size="sm"
+										onClick={() => setShowMatches(false)}
+										className="text-slate-400 hover:text-slate-200"
+									>
+										✕
+									</Button>
+								</div>
 							</div>
 
 							<div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">

@@ -5,6 +5,67 @@ export const generateUserId = () => {
 	return "user_" + Math.random().toString(36).substr(2, 9);
 };
 
+// Check if a user ID is already taken
+export const checkUserIdExists = async (userId: string) => {
+	try {
+		const { data, error } = await supabase
+			.from("user_profiles")
+			.select("user_id")
+			.eq("user_id", userId)
+			.single();
+
+		if (error && error.code !== "PGRST116") {
+			// PGRST116 is "not found" error, which is what we want
+			throw error;
+		}
+
+		return { exists: !!data, error: null };
+	} catch (error) {
+		console.error("Error checking user ID:", error);
+		return { exists: false, error };
+	}
+};
+
+// Update user ID for an existing profile
+export const updateUserId = async (oldUserId: string, newUserId: string) => {
+	try {
+		// Check if new user ID is already taken
+		const { exists } = await checkUserIdExists(newUserId);
+		if (exists) {
+			return { success: false, error: "User ID already taken" };
+		}
+
+		// Update user_profiles table
+		const { error: profileError } = await supabase
+			.from("user_profiles")
+			.update({ user_id: newUserId })
+			.eq("user_id", oldUserId);
+
+		if (profileError) throw profileError;
+
+		// Update user_interests table
+		const { error: interestsError } = await supabase
+			.from("user_interests")
+			.update({ user_id: newUserId })
+			.eq("user_id", oldUserId);
+
+		if (interestsError) throw interestsError;
+
+		// Update user_insights table
+		const { error: insightsError } = await supabase
+			.from("user_insights")
+			.update({ user_id: newUserId })
+			.eq("user_id", oldUserId);
+
+		if (insightsError) throw insightsError;
+
+		return { success: true, error: null };
+	} catch (error) {
+		console.error("Error updating user ID:", error);
+		return { success: false, error };
+	}
+};
+
 // Save user profile with interests and insights
 export const saveUserProfile = async (
 	userId: string,
