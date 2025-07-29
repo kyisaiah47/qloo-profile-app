@@ -1010,6 +1010,7 @@ Please respond with ONLY the username, nothing else.`;
 			) : showUserProfile ? (
 				<UserProfileScreen
 					userProfileData={userProfileData}
+					setUserProfileData={setUserProfileData}
 					userId={userId}
 					findMatches={findMatches}
 					loadingMatches={loadingMatches}
@@ -1541,6 +1542,7 @@ interface UserProfileData {
 
 const UserProfileScreen = ({
 	userProfileData,
+	setUserProfileData,
 	userId,
 	findMatches,
 	loadingMatches,
@@ -1557,6 +1559,7 @@ const UserProfileScreen = ({
 	isLoading,
 }: {
 	userProfileData: UserProfileData | null;
+	setUserProfileData: (data: UserProfileData | null) => void;
 	userId: string;
 	findMatches: () => void;
 	loadingMatches: boolean;
@@ -1756,7 +1759,7 @@ const UserProfileScreen = ({
 		} finally {
 			setLoadingTasteProfile(false);
 		}
-	}, [userProfileData, userId]);
+	}, [userProfileData, userId, setUserProfileData]);
 
 	// Load taste profile on mount and auto-generate if not found
 	useEffect(() => {
@@ -2231,27 +2234,6 @@ const UserProfileScreen = ({
 												</motion.div>
 											))}
 										</div>
-
-										{/* Update Profile Button */}
-										<div className="pt-4 border-t border-slate-700">
-											<Button
-												onClick={handleUpdateProfile}
-												disabled={isLoading}
-												className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white"
-											>
-												{isLoading ? (
-													<>
-														<div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-														Updating Profile...
-													</>
-												) : (
-													<>
-														<span className="mr-2">🔄</span>
-														Update Profile
-													</>
-												)}
-											</Button>
-										</div>
 									</div>
 								)}
 							</div>
@@ -2265,6 +2247,27 @@ const UserProfileScreen = ({
 									>
 										<span className="mr-2">←</span>
 										Go to Profile
+									</Button>
+								) : activeTab === "interests" ? (
+									<Button
+										onClick={handleUpdateProfile}
+										disabled={isLoading}
+										className="flex-1 h-16 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-xl font-bold text-white shadow-2xl border-2 border-blue-400/50 hover:border-blue-300/70 transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 hover:shadow-blue-500/25"
+									>
+										{isLoading ? (
+											<>
+												<div className="animate-spin w-6 h-6 border-3 border-white border-t-transparent rounded-full mr-3"></div>
+												<span className="text-xl">Updating Profile...</span>
+											</>
+										) : (
+											<>
+												<span className="text-2xl mr-3">🔄</span>
+												<span className="bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent font-heading">
+													Update Profile
+												</span>
+												<span className="text-2xl ml-3">✨</span>
+											</>
+										)}
 									</Button>
 								) : (
 									<Button
