@@ -1880,7 +1880,7 @@ const UserProfileScreen = ({
 															onClick={generateTasteProfile}
 															disabled={loadingTasteProfile}
 															size="sm"
-															className="bg-gradient-to-r from-pink-600 to-orange-600 hover:from-pink-500 hover:to-orange-500 text-white"
+															className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white"
 														>
 															{loadingTasteProfile ? (
 																<div className="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full mr-2"></div>
