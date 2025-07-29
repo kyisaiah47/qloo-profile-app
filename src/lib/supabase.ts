@@ -22,6 +22,7 @@ export interface UserProfile {
 	user_id: string;
 	interests: Record<string, string[]>;
 	insights: Record<string, InsightItem[]>;
+	contact?: string;
 	profile_completed: boolean;
 	taste_profile_headline?: string;
 	taste_profile_description?: string;

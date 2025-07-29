@@ -248,6 +248,8 @@ export default function ProfileForm() {
 	const [userIdError, setUserIdError] = useState("");
 	const [connectionUserId, setConnectionUserId] = useState("");
 	const [connectionUserIdError, setConnectionUserIdError] = useState("");
+	const [contactInfo, setContactInfo] = useState("");
+	const [contactError, setContactError] = useState("");
 	const [generatingUsername, setGeneratingUsername] = useState(false);
 
 	// Debug useEffect to track insightResults changes
@@ -734,6 +736,7 @@ Please respond with ONLY the username, nothing else.`;
 					userId: connectionUserId || undefined, // Let the API generate one if not provided
 					interests: formData,
 					insights: insightMap,
+					contact: contactInfo || undefined, // Add contact info
 				}),
 			});
 
@@ -976,6 +979,10 @@ Please respond with ONLY the username, nothing else.`;
 					setConnectionUserId={setConnectionUserId}
 					connectionUserIdError={connectionUserIdError}
 					setConnectionUserIdError={setConnectionUserIdError}
+					contactInfo={contactInfo}
+					setContactInfo={setContactInfo}
+					contactError={contactError}
+					setContactError={setContactError}
 					generateUsername={generateUsername}
 					generatingUsername={generatingUsername}
 				/>
@@ -1980,6 +1987,10 @@ interface ProfileFormScreenProps {
 	setConnectionUserId: (value: string) => void;
 	connectionUserIdError: string;
 	setConnectionUserIdError: (error: string) => void;
+	contactInfo: string;
+	setContactInfo: (value: string) => void;
+	contactError: string;
+	setContactError: (error: string) => void;
 	generateUsername: () => Promise<void>;
 	generatingUsername: boolean;
 }
@@ -2003,6 +2014,10 @@ const ProfileFormScreen = ({
 	setConnectionUserId,
 	connectionUserIdError,
 	setConnectionUserIdError,
+	contactInfo,
+	setContactInfo,
+	contactError,
+	setContactError,
 	generateUsername,
 	generatingUsername,
 }: ProfileFormScreenProps) => {
@@ -2095,51 +2110,83 @@ const ProfileFormScreen = ({
 								transition={{ delay: 0.8, duration: 0.4 }}
 								className="text-center mt-4 pt-4 border-t border-slate-700 flex-shrink-0"
 							>
-								{/* Username Input for Finding Connections */}
-								<div className="mb-4 max-w-md mx-auto">
-									<Label
-										htmlFor="connectionUserId"
-										className="text-sm font-medium text-slate-300 mb-2 block"
-									>
-										Enter Username to Find Connections
-									</Label>
-									<div className="relative flex gap-2">
-										<Input
-											id="connectionUserId"
-											type="text"
-											placeholder="Enter username..."
-											value={connectionUserId}
-											onChange={(e) => {
-												setConnectionUserId(e.target.value);
-												setConnectionUserIdError(""); // Clear error when typing
-											}}
-											className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 pr-10"
-											disabled={isLoading || generatingUsername}
-										/>
-										<Button
-											type="button"
-											onClick={generateUsername}
-											disabled={isLoading || generatingUsername}
-											className="px-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white"
-											title="Generate username from interests"
-										>
-											{generatingUsername ? (
-												<div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
-											) : (
-												"✨"
-											)}
-										</Button>
-										{generatingUsername && (
-											<div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-												<div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+								{/* Username and Contact Input for Finding Connections */}
+								<div className="mb-4 max-w-2xl mx-auto">
+									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+										{/* Username Field */}
+										<div>
+											<Label
+												htmlFor="connectionUserId"
+												className="text-sm font-medium text-slate-300 mb-2 block"
+											>
+												Enter Username to Find Connections
+											</Label>
+											<div className="relative flex gap-2">
+												<Input
+													id="connectionUserId"
+													type="text"
+													placeholder="Enter username..."
+													value={connectionUserId}
+													onChange={(e) => {
+														setConnectionUserId(e.target.value);
+														setConnectionUserIdError(""); // Clear error when typing
+													}}
+													className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 pr-10"
+													disabled={isLoading || generatingUsername}
+												/>
+												<Button
+													type="button"
+													onClick={generateUsername}
+													disabled={isLoading || generatingUsername}
+													className="px-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white"
+													title="Generate username from interests"
+												>
+													{generatingUsername ? (
+														<div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+													) : (
+														"✨"
+													)}
+												</Button>
+												{generatingUsername && (
+													<div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+														<div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+													</div>
+												)}
 											</div>
-										)}
+											{connectionUserIdError && (
+												<p className="text-red-400 text-xs mt-1">
+													{connectionUserIdError}
+												</p>
+											)}
+										</div>
+
+										{/* Contact Field */}
+										<div>
+											<Label
+												htmlFor="contactInfo"
+												className="text-sm font-medium text-slate-300 mb-2 block"
+											>
+												Contact Info (Email or Phone)
+											</Label>
+											<Input
+												id="contactInfo"
+												type="text"
+												placeholder="email@example.com or (555) 123-4567"
+												value={contactInfo}
+												onChange={(e) => {
+													setContactInfo(e.target.value);
+													setContactError(""); // Clear error when typing
+												}}
+												className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+												disabled={isLoading || generatingUsername}
+											/>
+											{contactError && (
+												<p className="text-red-400 text-xs mt-1">
+													{contactError}
+												</p>
+											)}
+										</div>
 									</div>
-									{connectionUserIdError && (
-										<p className="text-red-400 text-xs mt-1">
-											{connectionUserIdError}
-										</p>
-									)}
 								</div>
 
 								<Button

@@ -70,7 +70,8 @@ export const updateUserId = async (oldUserId: string, newUserId: string) => {
 export const saveUserProfile = async (
 	userId: string,
 	interests: Record<string, string[]>,
-	insights: Record<string, InsightItem[]>
+	insights: Record<string, InsightItem[]>,
+	contact?: string
 ) => {
 	try {
 		console.log("Saving user profile for userId:", userId);
@@ -81,6 +82,7 @@ export const saveUserProfile = async (
 				user_id: userId,
 				interests,
 				insights,
+				contact: contact || null,
 				profile_completed: true,
 				updated_at: new Date().toISOString(),
 			})
