@@ -1667,7 +1667,7 @@ const ProfileFormScreen = ({
 							</div>
 
 							<div
-								className="flex-1 overflow-y-auto pr-1 min-h-0 max-h-[calc(100vh-320px)] scrollbar-container"
+								className="flex-1 overflow-y-auto pr-1 min-h-0 max-h-[calc(100vh-400px)] scrollbar-container"
 								style={{
 									scrollbarWidth: "thin",
 									scrollbarColor: "rgb(71 85 105) rgb(30 41 59)",
