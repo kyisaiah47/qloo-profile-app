@@ -1624,8 +1624,9 @@ const UserProfileScreen = ({
 						</div>
 						<Button
 							onClick={onLogout}
-							className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500"
+							className="bg-gradient-to-r from-red-600/80 to-red-500/80 hover:from-red-500 hover:to-red-400 text-white border border-red-400/30 hover:border-red-300/50 shadow-lg hover:shadow-red-500/25 transition-all duration-200"
 						>
+							<span className="mr-2">👋</span>
 							Logout
 						</Button>
 					</div>
@@ -1939,7 +1940,7 @@ const UserProfileScreen = ({
 										</Button>
 										<Button
 											onClick={onEditProfile}
-											className="px-8 h-16 border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500 transition-all duration-200"
+											className="px-8 h-16 bg-gradient-to-r from-emerald-600/80 to-teal-600/80 hover:from-emerald-500 hover:to-teal-500 text-white border border-emerald-400/30 hover:border-emerald-300/50 shadow-lg hover:shadow-emerald-500/25 transition-all duration-200"
 										>
 											<span className="mr-2 text-lg">✏️</span>
 											<span className="text-lg">Edit Profile</span>
