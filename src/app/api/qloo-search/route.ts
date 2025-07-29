@@ -2,11 +2,16 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
-	const { query } = await req.json();
+	const { query, type } = await req.json();
+
+	// Build type filter string if provided
+	const typeFilter = type
+		? `&types=urn:entity:${encodeURIComponent(type)}`
+		: "";
 
 	const url = `https://hackathon.api.qloo.com/search?query=${encodeURIComponent(
 		query
-	)}&take=20&page=1&sort_by=match`;
+	)}${typeFilter}&take=2&page=1&sort_by=match`;
 
 	const headers = {
 		"X-Api-Key": process.env.QLOO_API_KEY!,
