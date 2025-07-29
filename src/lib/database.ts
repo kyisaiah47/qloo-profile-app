@@ -124,68 +124,195 @@ export const getUserProfile = async (userId: string) => {
 };
 
 // Find similar users based on interests
+// Jaccard similarity calculation
+const jaccard = (setA: Set<string>, setB: Set<string>): number => {
+	if (setA.size === 0 && setB.size === 0) return 1;
+	if (setA.size === 0 || setB.size === 0) return 0;
+
+	const intersection = new Set([...setA].filter((x) => setB.has(x)));
+	const union = new Set([...setA, ...setB]);
+	return intersection.size / union.size;
+};
+
+// Weight different types based on cultural significance
+const TYPE_WEIGHTS: Record<string, number> = {
+	artist: 1.5,
+	movie: 1.4,
+	book: 1.3,
+	album: 1.3,
+	tv_show: 1.2,
+	brand: 1.1,
+	videogame: 1.0,
+	podcast: 1.0,
+	actor: 0.9,
+	director: 0.9,
+	author: 0.9,
+	person: 0.8,
+	destination: 0.8,
+	place: 0.7,
+	locality: 0.7,
+	tag: 0.6,
+	demographics: 0.5,
+};
+
 export const findSimilarUsers = async (userId: string) => {
 	try {
-		// Get current user's interests
-		const { data: userInterests } = await supabase
-			.from("user_interests")
-			.select("category, interest_name")
-			.eq("user_id", userId);
+		// Get current user's profile and interests
+		const { data: currentUserProfile, error: profileError } = await supabase
+			.from("user_profiles")
+			.select("*")
+			.eq("user_id", userId)
+			.single();
 
-		if (!userInterests || userInterests.length === 0) {
-			return { success: true, similarUsers: [] };
-		}
+		if (profileError) throw profileError;
 
-		// Find users with overlapping interests
-		const interestNames = userInterests.map((i) => i.interest_name);
-
-		const { data: similarUsers, error } = await supabase
-			.from("user_interests")
+		// Get all other users with their profiles and interests
+		const { data: otherUsers, error: usersError } = await supabase
+			.from("user_profiles")
 			.select(
 				`
-        user_id,
-        user_profiles!inner(user_id, created_at, profile_completed)
-      `
+				*,
+				user_interests (*)
+			`
 			)
-			.in("interest_name", interestNames)
-			.neq("user_id", userId);
+			.neq("user_id", userId)
+			.eq("profile_completed", true);
 
-		if (error) throw error;
+		if (usersError) throw usersError;
 
-		// Group by user and count matches
-		const userMatches: Record<
-			string,
-			{
-				userId: string;
-				matchCount: number;
-				profile: {
-					user_id: string;
-					created_at: string;
-					profile_completed: boolean;
-				};
+		// Organize current user's interests by type and entity_id
+		const currentUserTasteVector: Record<string, Set<string>> = {};
+
+		// Add original interests
+		Object.entries(currentUserProfile.interests || {}).forEach(
+			([type, interests]) => {
+				if (!currentUserTasteVector[type]) {
+					currentUserTasteVector[type] = new Set();
+				}
+				(interests as string[]).forEach((interest) => {
+					currentUserTasteVector[type].add(interest.toLowerCase());
+				});
 			}
-		> = {};
+		);
 
-		similarUsers?.forEach((item) => {
-			const otherUserId = item.user_id;
-			if (!userMatches[otherUserId]) {
-				userMatches[otherUserId] = {
-					userId: otherUserId,
-					matchCount: 0,
-					profile: Array.isArray(item.user_profiles)
-						? item.user_profiles[0]
-						: item.user_profiles,
-				};
+		// Add entity IDs from insights (expanded taste fingerprint)
+		Object.entries(currentUserProfile.insights || {}).forEach(
+			([type, insightItems]) => {
+				if (!currentUserTasteVector[type]) {
+					currentUserTasteVector[type] = new Set();
+				}
+				(insightItems as InsightItem[]).forEach((item) => {
+					currentUserTasteVector[type].add(item.entity_id);
+					currentUserTasteVector[type].add(item.name.toLowerCase());
+				});
 			}
-			userMatches[otherUserId].matchCount++;
+		);
+
+		// Calculate matches
+		const matches = [];
+
+		for (const otherUser of otherUsers || []) {
+			// Organize other user's taste vector
+			const otherUserTasteVector: Record<string, Set<string>> = {};
+
+			// Add original interests
+			Object.entries(otherUser.interests || {}).forEach(([type, interests]) => {
+				if (!otherUserTasteVector[type]) {
+					otherUserTasteVector[type] = new Set();
+				}
+				(interests as string[]).forEach((interest) => {
+					otherUserTasteVector[type].add(interest.toLowerCase());
+				});
+			});
+
+			// Add entity IDs from insights
+			Object.entries(otherUser.insights || {}).forEach(
+				([type, insightItems]) => {
+					if (!otherUserTasteVector[type]) {
+						otherUserTasteVector[type] = new Set();
+					}
+					(insightItems as InsightItem[]).forEach((item) => {
+						otherUserTasteVector[type].add(item.entity_id);
+						otherUserTasteVector[type].add(item.name.toLowerCase());
+					});
+				}
+			);
+
+			// Calculate weighted similarity score
+			let totalScore = 0;
+			let totalWeight = 0;
+			const sharedFields: string[] = [];
+			const sharedEntities: Record<string, string[]> = {};
+
+			// Check similarity for each type
+			Object.entries(TYPE_WEIGHTS).forEach(([type, weight]) => {
+				const currentSet = currentUserTasteVector[type] || new Set();
+				const otherSet = otherUserTasteVector[type] || new Set();
+
+				if (currentSet.size > 0 && otherSet.size > 0) {
+					const similarity = jaccard(currentSet, otherSet);
+
+					if (similarity > 0) {
+						sharedFields.push(type);
+
+						// Find shared entities
+						const shared = [...currentSet].filter((x) => otherSet.has(x));
+						if (shared.length > 0) {
+							sharedEntities[type] = shared.slice(0, 5); // Limit to top 5
+						}
+					}
+
+					totalScore += similarity * weight;
+					totalWeight += weight;
+				}
+			});
+
+			// Only include users with meaningful overlap
+			if (totalWeight > 0 && sharedFields.length > 0) {
+				const matchScore = totalScore / totalWeight;
+
+				// Add bonus for high-signal domains
+				let bonus = 0;
+				const highSignalTypes = ["artist", "movie", "book", "brand"];
+				highSignalTypes.forEach((type) => {
+					if (sharedFields.includes(type)) {
+						bonus += 0.1;
+					}
+				});
+
+				matches.push({
+					user: {
+						user_id: otherUser.user_id,
+						name: `User ${otherUser.user_id.slice(-4)}`, // Placeholder name
+						location: "🌍", // Placeholder
+						bio: "Music lover, movie enthusiast, always exploring new places", // Placeholder
+						ai_profile: otherUser.ai_profile || null,
+					},
+					matchScore: Math.min(matchScore + bonus, 1), // Cap at 1.0
+					sharedFields,
+					sharedEntities,
+					totalSharedItems: Object.values(sharedEntities).flat().length,
+				});
+			}
+		}
+
+		// Sort by match score and shared items count
+		matches.sort((a, b) => {
+			if (Math.abs(a.matchScore - b.matchScore) < 0.05) {
+				// If scores are close, prioritize more shared items
+				return b.totalSharedItems - a.totalSharedItems;
+			}
+			return b.matchScore - a.matchScore;
 		});
 
-		// Sort by match count and return top matches
-		const sortedMatches = Object.values(userMatches)
-			.sort((a, b) => b.matchCount - a.matchCount)
-			.slice(0, 10);
+		const topMatches = matches.slice(0, 10);
 
-		return { success: true, similarUsers: sortedMatches };
+		return {
+			success: true,
+			similarUsers: topMatches,
+			totalUsers: otherUsers?.length || 0,
+			algorithm: "taste-based-jaccard-similarity",
+		};
 	} catch (error) {
 		console.error("Error finding similar users:", error);
 		return { success: false, error };
