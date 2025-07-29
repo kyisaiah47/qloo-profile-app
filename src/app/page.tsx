@@ -219,6 +219,13 @@ const getPlaceholder = (type: string) => {
 
 export default function ProfileForm() {
 	const [showWelcome, setShowWelcome] = useState(true);
+	const [isLoggedIn, setIsLoggedIn] = useState(false);
+	const [showLogin, setShowLogin] = useState(false);
+	const [showUserProfile, setShowUserProfile] = useState(false);
+	const [loginUserId, setLoginUserId] = useState("");
+	const [loginError, setLoginError] = useState("");
+	const [userProfileData, setUserProfileData] =
+		useState<UserProfileData | null>(null);
 	const [formData, setFormData] = useState<Record<string, string[]>>({});
 	const [insightResults, setInsightResults] = useState<
 		Record<string, InsightItem[]> & { aiProfile?: AIProfile }
@@ -236,6 +243,45 @@ export default function ProfileForm() {
 
 	const handleChange = (type: string, values: string[]) => {
 		setFormData({ ...formData, [type]: values });
+	};
+
+	const handleLogin = async () => {
+		if (!loginUserId.trim()) {
+			setLoginError("Please enter your User ID");
+			return;
+		}
+
+		setIsLoading(true);
+		try {
+			// Check if user exists and get their profile
+			const response = await fetch("/api/get-user-profile", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ userId: loginUserId }),
+			});
+
+			const result = await response.json();
+			if (result.success && result.data) {
+				setUserId(loginUserId);
+				setUserProfileData(result.data);
+				setIsLoggedIn(true);
+				setShowLogin(false);
+				setShowWelcome(false);
+				setShowUserProfile(true);
+				setLoginError("");
+			} else {
+				setLoginError(
+					"User ID not found. Please check your ID or create a new profile."
+				);
+			}
+		} catch (error) {
+			console.error("Error during login:", error);
+			setLoginError("An error occurred. Please try again.");
+		} finally {
+			setIsLoading(false);
+		}
 	};
 
 	const findMatches = async () => {
@@ -400,6 +446,24 @@ export default function ProfileForm() {
 			if (updateResult.success) {
 				console.log("Profile updated successfully!", updateResult);
 				setShowProfile(false);
+
+				// Refresh user profile data if logged in
+				if (isLoggedIn) {
+					try {
+						const response = await fetch("/api/get-user-profile", {
+							method: "POST",
+							headers: { "Content-Type": "application/json" },
+							body: JSON.stringify({ userId: userId }),
+						});
+						const result = await response.json();
+						if (result.success && result.data) {
+							setUserProfileData(result.data);
+						}
+						setShowUserProfile(true);
+					} catch (error) {
+						console.error("Error refreshing profile data:", error);
+					}
+				}
 
 				// Optionally regenerate AI profile with updated interests
 				try {
@@ -585,7 +649,48 @@ export default function ProfileForm() {
 			</div>
 
 			{showWelcome ? (
-				<WelcomeScreen onGetStarted={() => setShowWelcome(false)} />
+				<WelcomeScreen
+					onGetStarted={() => setShowWelcome(false)}
+					onLogin={() => {
+						setShowWelcome(false);
+						setShowLogin(true);
+					}}
+				/>
+			) : showLogin ? (
+				<LoginScreen
+					loginUserId={loginUserId}
+					setLoginUserId={setLoginUserId}
+					loginError={loginError}
+					isLoading={isLoading}
+					onLogin={handleLogin}
+					onBack={() => {
+						setShowLogin(false);
+						setShowWelcome(true);
+						setLoginError("");
+						setLoginUserId("");
+					}}
+				/>
+			) : showUserProfile ? (
+				<UserProfileScreen
+					userProfileData={userProfileData}
+					userId={userId}
+					findMatches={findMatches}
+					loadingMatches={loadingMatches}
+					onEditProfile={() => {
+						if (userProfileData?.interests) {
+							setFormData(userProfileData.interests);
+						}
+						setShowUserProfile(false);
+						setShowProfile(true);
+					}}
+					onLogout={() => {
+						setIsLoggedIn(false);
+						setShowUserProfile(false);
+						setShowWelcome(true);
+						setUserId("");
+						setUserProfileData(null);
+					}}
+				/>
 			) : (
 				<ProfileFormScreen
 					formData={formData}
@@ -633,11 +738,16 @@ export default function ProfileForm() {
 							<Button
 								variant="outline"
 								size="lg"
-								onClick={() => setShowProfile(false)}
+								onClick={() => {
+									setShowProfile(false);
+									if (isLoggedIn && userProfileData) {
+										setShowUserProfile(true);
+									}
+								}}
 								className="text-slate-300 border-slate-600 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500 transition-all"
 							>
 								<span className="mr-2">←</span>
-								Back to Matches
+								{isLoggedIn ? "Back to Profile" : "Back to Matches"}
 							</Button>
 						</div>
 					</div>
@@ -831,7 +941,12 @@ export default function ProfileForm() {
 											)}
 										</Button>
 										<Button
-											onClick={() => setShowProfile(false)}
+											onClick={() => {
+												setShowProfile(false);
+												if (isLoggedIn && userProfileData) {
+													setShowUserProfile(true);
+												}
+											}}
 											variant="outline"
 											className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500 transition-all"
 										>
@@ -848,7 +963,13 @@ export default function ProfileForm() {
 	);
 }
 
-const WelcomeScreen = ({ onGetStarted }: { onGetStarted: () => void }) => {
+const WelcomeScreen = ({
+	onGetStarted,
+	onLogin,
+}: {
+	onGetStarted: () => void;
+	onLogin: () => void;
+}) => {
 	return (
 		<div className="h-full flex flex-col relative z-10 p-6">
 			<motion.div
@@ -945,17 +1066,321 @@ const WelcomeScreen = ({ onGetStarted }: { onGetStarted: () => void }) => {
 								transition={{ delay: 1.0, duration: 0.4 }}
 								className="text-center"
 							>
-								<Button
-									onClick={onGetStarted}
-									size="lg"
-									className="px-10 py-4 text-lg font-semibold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 transition-all duration-300 shadow-lg text-white transform hover:scale-105"
-								>
-									Get Started ✨
-								</Button>
-								<p className="text-xs text-slate-500 mt-4">
-									Takes less than 2 minutes to set up your profile
-								</p>
+								<div className="space-y-4">
+									<Button
+										onClick={onGetStarted}
+										size="lg"
+										className="px-10 py-4 text-lg font-semibold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 transition-all duration-300 shadow-lg text-white transform hover:scale-105"
+									>
+										Get Started ✨
+									</Button>
+									<p className="text-xs text-slate-500">
+										Takes less than 2 minutes to set up your profile
+									</p>
+
+									<div className="flex items-center gap-3 my-6">
+										<div className="flex-1 h-px bg-slate-700"></div>
+										<span className="text-sm text-slate-400">or</span>
+										<div className="flex-1 h-px bg-slate-700"></div>
+									</div>
+
+									<Button
+										onClick={onLogin}
+										variant="outline"
+										size="lg"
+										className="px-10 py-4 text-lg font-semibold border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500 transition-all duration-300"
+									>
+										Login with User ID 🔑
+									</Button>
+									<p className="text-xs text-slate-500">
+										Already have an account? Sign in with your User ID
+									</p>
+								</div>
 							</motion.div>
+						</CardContent>
+					</Card>
+				</motion.div>
+			</motion.div>
+		</div>
+	);
+};
+
+const LoginScreen = ({
+	loginUserId,
+	setLoginUserId,
+	loginError,
+	isLoading,
+	onLogin,
+	onBack,
+}: {
+	loginUserId: string;
+	setLoginUserId: (value: string) => void;
+	loginError: string;
+	isLoading: boolean;
+	onLogin: () => void;
+	onBack: () => void;
+}) => {
+	return (
+		<div className="h-full flex flex-col relative z-10 p-6">
+			<motion.div
+				initial={{ opacity: 0, y: 20 }}
+				animate={{ opacity: 1, y: 0 }}
+				transition={{ duration: 0.6 }}
+				className="flex-1 flex flex-col max-w-2xl mx-auto w-full justify-center"
+			>
+				<motion.div
+					initial={{ opacity: 0, y: -20 }}
+					animate={{ opacity: 1, y: 0 }}
+					transition={{ delay: 0.2, duration: 0.6 }}
+					className="text-center mb-8"
+				>
+					<h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+						Welcome Back
+					</h1>
+					<p className="text-lg text-slate-300 mb-2">
+						Sign in with your User ID
+					</p>
+					<p className="text-slate-400">
+						Continue where you left off and connect with your tribe
+					</p>
+				</motion.div>
+
+				<motion.div
+					initial={{ opacity: 0, y: 20 }}
+					animate={{ opacity: 1, y: 0 }}
+					transition={{ delay: 0.4, duration: 0.6 }}
+					className="w-full"
+				>
+					<Card className="shadow-2xl border border-slate-700 bg-slate-800/90 backdrop-blur-sm">
+						<CardContent className="p-8">
+							<div className="space-y-6">
+								<div className="space-y-2">
+									<Label
+										htmlFor="login-user-id"
+										className="text-slate-300 text-base"
+									>
+										User ID
+									</Label>
+									<Input
+										id="login-user-id"
+										type="text"
+										value={loginUserId}
+										onChange={(e) => {
+											setLoginUserId(e.target.value);
+										}}
+										placeholder="Enter your User ID"
+										className="h-12 bg-slate-700 border-slate-600 text-slate-200 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500"
+										onKeyDown={(e) => {
+											if (e.key === "Enter" && !isLoading) {
+												onLogin();
+											}
+										}}
+									/>
+									{loginError && (
+										<p className="text-red-400 text-sm mt-2">{loginError}</p>
+									)}
+								</div>
+
+								<div className="space-y-4">
+									<Button
+										onClick={onLogin}
+										disabled={isLoading}
+										className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 transition-all duration-300"
+									>
+										{isLoading ? (
+											<>
+												<div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+												Signing In...
+											</>
+										) : (
+											"Sign In 🔑"
+										)}
+									</Button>
+
+									<Button
+										onClick={onBack}
+										variant="outline"
+										className="w-full h-12 text-lg border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500 transition-all"
+									>
+										Back to Home
+									</Button>
+								</div>
+
+								<div className="text-center pt-4 border-t border-slate-700">
+									<p className="text-sm text-slate-400">
+										Don&apos;t have a User ID?{" "}
+										<button
+											onClick={onBack}
+											className="text-blue-400 hover:text-blue-300 underline"
+										>
+											Create a new profile
+										</button>
+									</p>
+								</div>
+							</div>
+						</CardContent>
+					</Card>
+				</motion.div>
+			</motion.div>
+		</div>
+	);
+};
+
+interface UserProfileData {
+	profile: {
+		user_id: string;
+		name?: string;
+		location?: string;
+		bio?: string;
+		ai_profile?: string;
+	};
+	interests: Record<string, string[]>;
+	insights: InsightItem[];
+}
+
+const UserProfileScreen = ({
+	userProfileData,
+	userId,
+	findMatches,
+	loadingMatches,
+	onEditProfile,
+	onLogout,
+}: {
+	userProfileData: UserProfileData | null;
+	userId: string;
+	findMatches: () => void;
+	loadingMatches: boolean;
+	onEditProfile: () => void;
+	onLogout: () => void;
+}) => {
+	return (
+		<div className="h-full flex flex-col relative z-10 p-6">
+			<motion.div
+				initial={{ opacity: 0, y: 20 }}
+				animate={{ opacity: 1, y: 0 }}
+				transition={{ duration: 0.6 }}
+				className="flex-1 flex flex-col max-w-4xl mx-auto w-full"
+			>
+				{/* Header */}
+				<motion.div
+					initial={{ opacity: 0, y: -20 }}
+					animate={{ opacity: 1, y: 0 }}
+					transition={{ delay: 0.2, duration: 0.6 }}
+					className="text-center mb-8"
+				>
+					<div className="flex items-center justify-between mb-6">
+						<div className="flex items-center gap-3">
+							<div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-2xl">
+								👤
+							</div>
+							<div className="text-left">
+								<h1 className="text-3xl font-bold text-slate-200">
+									Your Profile
+								</h1>
+								<p className="text-slate-400">ID: {userId}</p>
+							</div>
+						</div>
+						<Button
+							onClick={onLogout}
+							variant="outline"
+							className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500"
+						>
+							Logout
+						</Button>
+					</div>
+				</motion.div>
+
+				<motion.div
+					initial={{ opacity: 0, y: 20 }}
+					animate={{ opacity: 1, y: 0 }}
+					transition={{ delay: 0.4, duration: 0.6 }}
+					className="flex-1"
+				>
+					<Card className="shadow-xl border border-slate-700 bg-slate-800/90 backdrop-blur-sm h-full">
+						<CardContent className="p-8 h-full flex flex-col">
+							{/* Profile Info */}
+							<div className="space-y-6 flex-1">
+								{userProfileData?.profile?.ai_profile && (
+									<div className="bg-slate-700/50 p-6 rounded-lg border border-slate-600">
+										<h3 className="text-xl font-semibold text-slate-200 mb-3">
+											Your Vibe
+										</h3>
+										<p className="text-slate-300 leading-relaxed">
+											{
+												JSON.parse(userProfileData.profile.ai_profile)
+													.description
+											}
+										</p>
+									</div>
+								)}
+
+								{/* Interests Summary */}
+								{userProfileData?.interests &&
+									Object.keys(userProfileData.interests).length > 0 && (
+										<div className="bg-slate-700/50 p-6 rounded-lg border border-slate-600">
+											<h3 className="text-xl font-semibold text-slate-200 mb-4">
+												Your Interests
+											</h3>
+											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+												{Object.entries(userProfileData.interests)
+													.slice(0, 6)
+													.map(([type, items]: [string, string[]]) => (
+														<div
+															key={type}
+															className="space-y-2"
+														>
+															<h4 className="text-sm font-medium text-slate-300 capitalize">
+																{type.replace("_", " ")}
+															</h4>
+															<div className="flex flex-wrap gap-1">
+																{items
+																	.slice(0, 3)
+																	.map((item: string, index: number) => (
+																		<span
+																			key={index}
+																			className="px-2 py-1 bg-blue-600/20 text-blue-300 rounded-full text-xs border border-blue-500/30"
+																		>
+																			{item}
+																		</span>
+																	))}
+																{items.length > 3 && (
+																	<span className="px-2 py-1 bg-slate-600 text-slate-300 rounded-full text-xs">
+																		+{items.length - 3} more
+																	</span>
+																)}
+															</div>
+														</div>
+													))}
+											</div>
+										</div>
+									)}
+							</div>
+
+							{/* Action Buttons */}
+							<div className="flex gap-4 pt-6 border-t border-slate-700">
+								<Button
+									onClick={findMatches}
+									disabled={loadingMatches}
+									className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-lg font-semibold"
+								>
+									{loadingMatches ? (
+										<>
+											<div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+											Finding Matches...
+										</>
+									) : (
+										"See Your Matches 🤝"
+									)}
+								</Button>
+								<Button
+									onClick={onEditProfile}
+									variant="outline"
+									className="px-8 h-12 border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500"
+								>
+									<span className="mr-2">✏️</span>
+									Edit Profile
+								</Button>
+							</div>
 						</CardContent>
 					</Card>
 				</motion.div>
