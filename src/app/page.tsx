@@ -477,8 +477,10 @@ export default function ProfileForm() {
 					});
 
 					const aiResult = await aiResponse.json();
-					if (aiResult.success) {
+					if (aiResult.success && aiResult.data && aiResult.data.headline) {
 						setInsightResults({ aiProfile: aiResult.data });
+					} else {
+						console.error("Invalid AI profile data:", aiResult);
 					}
 				} catch (aiError) {
 					console.error("Error regenerating AI profile:", aiError);
@@ -736,7 +738,6 @@ export default function ProfileForm() {
 								</div>
 							</div>
 							<Button
-								variant="outline"
 								size="lg"
 								onClick={() => {
 									setShowProfile(false);
@@ -778,7 +779,7 @@ export default function ProfileForm() {
 													<div>
 														<Label
 															htmlFor="user-id-input"
-															className="text-slate-300"
+															className="text-slate-300 mb-2"
 														>
 															New User ID
 														</Label>
@@ -812,7 +813,6 @@ export default function ProfileForm() {
 																setNewUserId("");
 																setUserIdError("");
 															}}
-															variant="outline"
 															size="sm"
 															className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100"
 														>
@@ -835,7 +835,6 @@ export default function ProfileForm() {
 															setEditingUserId(true);
 															setNewUserId(userId);
 														}}
-														variant="outline"
 														size="sm"
 														className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500 transition-all"
 													>
@@ -868,7 +867,6 @@ export default function ProfileForm() {
 														Max 280 characters
 													</p>
 													<Button
-														variant="outline"
 														size="sm"
 														className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500 transition-all"
 													>
@@ -947,7 +945,6 @@ export default function ProfileForm() {
 													setShowUserProfile(true);
 												}
 											}}
-											variant="outline"
 											className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500 transition-all"
 										>
 											Cancel
@@ -1086,7 +1083,6 @@ const WelcomeScreen = ({
 
 									<Button
 										onClick={onLogin}
-										variant="outline"
 										size="lg"
 										className="px-10 py-4 text-lg font-semibold border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500 transition-all duration-300"
 									>
@@ -1199,7 +1195,6 @@ const LoginScreen = ({
 
 									<Button
 										onClick={onBack}
-										variant="outline"
 										className="w-full h-12 text-lg border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500 transition-all"
 									>
 										Back to Home
@@ -1282,7 +1277,6 @@ const UserProfileScreen = ({
 						</div>
 						<Button
 							onClick={onLogout}
-							variant="outline"
 							className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500"
 						>
 							Logout
@@ -1374,7 +1368,6 @@ const UserProfileScreen = ({
 								</Button>
 								<Button
 									onClick={onEditProfile}
-									variant="outline"
 									className="px-8 h-12 border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hover:border-slate-500"
 								>
 									<span className="mr-2">✏️</span>
@@ -1615,15 +1608,22 @@ const ProfileFormScreen = ({
 													Your Vibe
 												</h3>
 												<div className="flex flex-wrap gap-2">
-													{insightResults.aiProfile.traits.map(
-														(trait: string, index: number) => (
-															<span
-																key={index}
-																className="px-3 py-1 bg-blue-600/20 text-blue-300 rounded-full text-sm font-medium border border-blue-500/30"
-															>
-																{trait}
-															</span>
+													{insightResults.aiProfile.traits &&
+													Array.isArray(insightResults.aiProfile.traits) ? (
+														insightResults.aiProfile.traits.map(
+															(trait: string, index: number) => (
+																<span
+																	key={index}
+																	className="px-3 py-1 bg-blue-600/20 text-blue-300 rounded-full text-sm font-medium border border-blue-500/30"
+																>
+																	{trait}
+																</span>
+															)
 														)
+													) : (
+														<span className="text-slate-400">
+															No traits available
+														</span>
 													)}
 												</div>
 											</CardContent>
@@ -1694,7 +1694,6 @@ const ProfileFormScreen = ({
 								</h2>
 								<div className="flex items-center gap-3">
 									<Button
-										variant="outline"
 										size="sm"
 										onClick={() => {
 											setShowMatches(false);
