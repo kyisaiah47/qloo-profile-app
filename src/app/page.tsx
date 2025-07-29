@@ -316,11 +316,11 @@ export default function ProfileForm() {
 						animate={{ opacity: 1, y: 0 }}
 						transition={{ delay: 0.6, duration: 0.6 }}
 						onSubmit={handleSubmit}
-						className="flex-1 flex flex-col"
+						className="flex-1 flex flex-col min-h-0"
 					>
-						<Card className="shadow-xl border border-slate-700 bg-slate-800/90 backdrop-blur-sm flex-1">
-							<CardContent className="p-8 h-full flex flex-col">
-								<div className="text-center mb-8">
+						<Card className="shadow-xl border border-slate-700 bg-slate-800/90 backdrop-blur-sm flex-1 flex flex-col min-h-0">
+							<CardContent className="p-8 flex-1 flex flex-col min-h-0">
+								<div className="text-center mb-6 flex-shrink-0">
 									<h2 className="text-xl font-semibold text-slate-200 mb-2">
 										Share Your Preferences
 									</h2>
@@ -329,40 +329,70 @@ export default function ProfileForm() {
 									</p>
 								</div>
 
-								<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 flex-1">
-									{QLOO_TYPES.map((type, index) => (
-										<motion.div
-											key={type}
-											initial={{ opacity: 0, y: 20 }}
-											animate={{ opacity: 1, y: 0 }}
-											transition={{
-												delay: 0.8 + index * 0.05,
-												duration: 0.4,
-											}}
-											className="space-y-3 group"
-										>
-											<Label
-												htmlFor={type}
-												className="capitalize text-sm font-semibold text-slate-300 flex items-center gap-2 group-hover:text-blue-400 transition-colors"
+								<div
+									className="flex-1 overflow-y-auto pr-1 min-h-0 max-h-[calc(100vh-320px)] scrollbar-container"
+									style={{
+										scrollbarWidth: "thin",
+										scrollbarColor: "rgb(71 85 105) rgb(30 41 59)",
+									}}
+								>
+									<style
+										dangerouslySetInnerHTML={{
+											__html: `
+											.scrollbar-container::-webkit-scrollbar {
+												width: 6px;
+											}
+											.scrollbar-container::-webkit-scrollbar-track {
+												background: rgb(30 41 59);
+												border-radius: 3px;
+											}
+											.scrollbar-container::-webkit-scrollbar-thumb {
+												background: rgb(71 85 105);
+												border-radius: 3px;
+											}
+											.scrollbar-container::-webkit-scrollbar-thumb:hover {
+												background: rgb(100 116 139);
+											}
+										`,
+										}}
+									/>
+									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-4 pr-1">
+										{QLOO_TYPES.map((type, index) => (
+											<motion.div
+												key={type}
+												initial={{ opacity: 0, y: 20 }}
+												animate={{ opacity: 1, y: 0 }}
+												transition={{
+													delay: 0.8 + index * 0.05,
+													duration: 0.4,
+												}}
+												className="space-y-3 group"
 											>
-												<span className="text-base">{getTypeEmoji(type)}</span>
-												{type.replace("_", " ")}
-											</Label>
-											<ChipInput
-												id={type}
-												placeholder={`e.g. ${getPlaceholder(type)}`}
-												values={formData[type] || []}
-												onChange={(values) => handleChange(type, values)}
-											/>
-										</motion.div>
-									))}
+												<Label
+													htmlFor={type}
+													className="capitalize text-sm font-semibold text-slate-300 flex items-center gap-2 group-hover:text-blue-400 transition-colors"
+												>
+													<span className="text-base">
+														{getTypeEmoji(type)}
+													</span>
+													{type.replace("_", " ")}
+												</Label>
+												<ChipInput
+													id={type}
+													placeholder={`e.g. ${getPlaceholder(type)}`}
+													values={formData[type] || []}
+													onChange={(values) => handleChange(type, values)}
+												/>
+											</motion.div>
+										))}
+									</div>
 								</div>
 
 								<motion.div
 									initial={{ opacity: 0 }}
 									animate={{ opacity: 1 }}
 									transition={{ delay: 1.2, duration: 0.4 }}
-									className="text-center mt-6 pt-4 border-t border-slate-700"
+									className="text-center mt-4 pt-4 border-t border-slate-700 flex-shrink-0"
 								>
 									<Button
 										type="submit"
