@@ -758,8 +758,17 @@ Please respond with ONLY the username, nothing else.`;
 					console.error("Error regenerating AI profile:", aiError);
 				}
 			} else {
-				console.error("Failed to update profile:", updateResult.error);
-				alert("Failed to update profile. Please try again.");
+				console.error("Failed to update profile. Full response:", updateResult);
+				console.error(
+					"Error details:",
+					updateResult.error || "No error details provided"
+				);
+				console.error("Response status:", updateResponse.status);
+				alert(
+					`Failed to update profile: ${
+						updateResult.error || "Unknown error"
+					}. Please try again.`
+				);
 			}
 		} catch (error) {
 			console.error("Error during profile update:", error);
