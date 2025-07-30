@@ -2118,16 +2118,18 @@ const ProfileFormScreen = ({
 					className="flex-1 flex flex-col min-h-0"
 				>
 					<Card className="shadow-xl border border-slate-700 bg-slate-800/90 backdrop-blur-sm flex-1 flex flex-col min-h-0">
-						<CardContent className="p-8 flex-1 flex flex-col min-h-0">
-							<div className="text-center mb-6 flex-shrink-0">
-								<h2 className="text-2xl font-semibold text-slate-200 mb-2 font-heading">
+						<CardContent className="p-6 md:p-8 flex-1 flex flex-col min-h-0">
+							{/* Header */}
+							<div className="text-center mb-4 flex-shrink-0">
+								<h2 className="text-xl md:text-2xl font-bold text-slate-200 mb-1 font-heading tracking-wide">
 									Build Your KindredAI Profile
 								</h2>
-								<p className="text-sm text-slate-400">
-									Share your interests so we can find your perfect connections
+								<p className="text-sm text-slate-400 leading-relaxed">
+									Share your interests to help us find your perfect connections.
 								</p>
 							</div>
 
+							{/* Scrollable Section */}
 							<div
 								className="flex-1 overflow-y-auto pr-1 min-h-0 max-h-[calc(100vh-400px)] scrollbar-container"
 								style={{
@@ -2138,34 +2140,34 @@ const ProfileFormScreen = ({
 								<style
 									dangerouslySetInnerHTML={{
 										__html: `
-										.scrollbar-container::-webkit-scrollbar {
-											width: 6px;
-										}
-										.scrollbar-container::-webkit-scrollbar-track {
-											background: rgb(30 41 59);
-											border-radius: 3px;
-										}
-										.scrollbar-container::-webkit-scrollbar-thumb {
-											background: rgb(71 85 105);
-											border-radius: 3px;
-										}
-										.scrollbar-container::-webkit-scrollbar-thumb:hover {
-											background: rgb(100 116 139);
-										}
-									`,
+                .scrollbar-container::-webkit-scrollbar {
+                  width: 6px;
+                }
+                .scrollbar-container::-webkit-scrollbar-track {
+                  background: rgb(30 41 59);
+                  border-radius: 3px;
+                }
+                .scrollbar-container::-webkit-scrollbar-thumb {
+                  background: rgb(71 85 105);
+                  border-radius: 3px;
+                }
+                .scrollbar-container::-webkit-scrollbar-thumb:hover {
+                  background: rgb(100 116 139);
+                }
+              `,
 									}}
 								/>
 
-								{/* Bulk Input Section */}
+								{/* Quick Fill */}
 								<div className="mb-6 border-b border-slate-600 pb-6">
 									<div className="flex items-center justify-between mb-3">
-										<h3 className="text-lg font-semibold text-slate-200">
+										<h3 className="text-base font-semibold text-slate-200 tracking-tight">
 											Quick Fill
 										</h3>
 										<button
 											type="button"
 											onClick={() => setShowBulkInput(!showBulkInput)}
-											className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+											className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
 										>
 											{showBulkInput ? "Hide" : "Show"} Bulk Input
 										</button>
@@ -2189,12 +2191,12 @@ const ProfileFormScreen = ({
 												placeholder="Enter semicolon-separated values..."
 												className="w-full h-24 p-3 bg-slate-700 border border-slate-600 rounded-md text-slate-200 placeholder-slate-400 text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 											/>
-											<div className="flex gap-2">
+											<div className="flex gap-2 mt-2">
 												<button
 													type="button"
 													onClick={() => parseAndFillFields(bulkInput)}
 													disabled={!bulkInput.trim()}
-													className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-sm transition-colors"
+													className="px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
 												>
 													Parse & Fill Fields
 												</button>
@@ -2204,7 +2206,7 @@ const ProfileFormScreen = ({
 														setBulkInput("");
 														setShowBulkInput(false);
 													}}
-													className="px-4 py-2 bg-slate-600 text-slate-300 rounded-md hover:bg-slate-700 text-sm transition-colors"
+													className="px-3 py-1.5 text-xs text-slate-300 bg-slate-600 rounded-md hover:bg-slate-700 transition"
 												>
 													Clear
 												</button>
@@ -2213,23 +2215,21 @@ const ProfileFormScreen = ({
 									)}
 								</div>
 
-								<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-4 pr-1">
+								{/* Interest Inputs */}
+								<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-4 pr-1">
 									{QLOO_TYPES.map((type, index) => (
 										<motion.div
 											key={type}
 											initial={{ opacity: 0, y: 20 }}
 											animate={{ opacity: 1, y: 0 }}
-											transition={{
-												delay: 0.4 + index * 0.03,
-												duration: 0.4,
-											}}
-											className="space-y-3 group"
+											transition={{ delay: 0.4 + index * 0.03, duration: 0.4 }}
+											className="space-y-2 group"
 										>
 											<Label
 												htmlFor={type}
-												className="capitalize text-sm font-semibold text-slate-300 flex items-center gap-2 group-hover:text-blue-400 transition-colors"
+												className="capitalize text-xs font-medium text-slate-300 flex items-center gap-1 group-hover:text-blue-400 transition-colors"
 											>
-												<span className="text-base">{getTypeEmoji(type)}</span>
+												<span className="text-sm">{getTypeEmoji(type)}</span>
 												{type.replace("_", " ")}
 											</Label>
 											<ChipInput
@@ -2243,20 +2243,19 @@ const ProfileFormScreen = ({
 								</div>
 							</div>
 
+							{/* Footer: Contact + Username + CTA */}
 							<motion.div
 								initial={{ opacity: 0 }}
 								animate={{ opacity: 1 }}
 								transition={{ delay: 0.8, duration: 0.4 }}
 								className="text-center mt-4 pt-4 border-t border-slate-700 flex-shrink-0"
 							>
-								{/* Username and Contact Input for Finding Connections */}
 								<div className="mb-4 max-w-2xl mx-auto">
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-										{/* Contact Field */}
 										<div>
 											<Label
 												htmlFor="contactInfo"
-												className="text-sm font-medium text-slate-300 mb-2 block"
+												className="text-xs font-medium text-slate-300 mb-1 block"
 											>
 												Contact Info (Email or Phone)
 											</Label>
@@ -2267,7 +2266,7 @@ const ProfileFormScreen = ({
 												value={contactInfo}
 												onChange={(e) => {
 													setContactInfo(e.target.value);
-													setContactError(""); // Clear error when typing
+													setContactError("");
 												}}
 												className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
 												disabled={isLoading || generatingUsername}
@@ -2278,12 +2277,10 @@ const ProfileFormScreen = ({
 												</p>
 											)}
 										</div>
-
-										{/* Username Field */}
 										<div>
 											<Label
 												htmlFor="connectionUserId"
-												className="text-sm font-medium text-slate-300 mb-2 block"
+												className="text-xs font-medium text-slate-300 mb-1 block"
 											>
 												Enter Username to Find Connections
 											</Label>
@@ -2295,7 +2292,7 @@ const ProfileFormScreen = ({
 													value={connectionUserId}
 													onChange={(e) => {
 														setConnectionUserId(e.target.value);
-														setConnectionUserIdError(""); // Clear error when typing
+														setConnectionUserIdError("");
 													}}
 													className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 pr-10"
 													disabled={isLoading || generatingUsername}
@@ -2313,11 +2310,6 @@ const ProfileFormScreen = ({
 														"✨"
 													)}
 												</Button>
-												{generatingUsername && (
-													<div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-														<div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-													</div>
-												)}
 											</div>
 											{connectionUserIdError && (
 												<p className="text-red-400 text-xs mt-1">
@@ -2334,7 +2326,7 @@ const ProfileFormScreen = ({
 									disabled={
 										isLoading || !connectionUserId.trim() || generatingUsername
 									}
-									className="px-8 py-3 text-base font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 transition-all duration-200 shadow-lg text-white disabled:opacity-50"
+									className="px-6 py-2.5 text-sm md:text-base font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-lg text-white disabled:opacity-50 transition-transform transform hover:scale-105 active:scale-95"
 								>
 									{isLoading ? (
 										<>
@@ -2364,172 +2356,6 @@ const ProfileFormScreen = ({
 						</CardContent>
 					</Card>
 				</motion.form>
-
-				{/* Display AI Profile in overlay */}
-				{Object.keys(insightResults).length > 0 && (
-					<motion.div
-						initial={{ opacity: 0 }}
-						animate={{ opacity: 1 }}
-						transition={{ duration: 0.3 }}
-						className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-						onClick={() => setInsightResults({})}
-					>
-						<motion.div
-							initial={{ scale: 0.9, opacity: 0 }}
-							animate={{ scale: 1, opacity: 1 }}
-							transition={{ duration: 0.3 }}
-							className="bg-slate-800 rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-slate-700"
-							onClick={(e) => e.stopPropagation()}
-						>
-							<div className="p-6 border-b border-slate-700 flex items-center justify-between">
-								<h2 className="text-2xl font-bold text-slate-200">
-									Your Taste Profile
-								</h2>
-								<Button
-									variant="ghost"
-									size="sm"
-									onClick={() => setInsightResults({})}
-									className="text-slate-400 hover:text-slate-200"
-								>
-									✕
-								</Button>
-							</div>
-
-							<div className="p-8 overflow-y-auto max-h-[calc(90vh-120px)]">
-								{insightResults.aiProfile &&
-								typeof insightResults.aiProfile === "object" &&
-								insightResults.aiProfile.headline &&
-								typeof insightResults.aiProfile.headline === "string" ? (
-									<div className="space-y-6">
-										{/* Main Profile Section */}
-										<div className="text-center space-y-4">
-											<div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full text-3xl mb-4">
-												✨
-											</div>
-											<h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-												{insightResults.aiProfile.headline}
-											</h1>
-											{insightResults.aiProfile.vibe &&
-												typeof insightResults.aiProfile.vibe === "string" && (
-													<div className="inline-block px-4 py-2 bg-slate-700 rounded-full">
-														<span className="text-sm font-medium text-blue-300">
-															{insightResults.aiProfile.vibe}
-														</span>
-													</div>
-												)}
-										</div>
-
-										{/* Description */}
-										{insightResults.aiProfile.description &&
-											typeof insightResults.aiProfile.description ===
-												"string" && (
-												<Card className="bg-slate-700 border-slate-600">
-													<CardContent className="p-6">
-														<h3 className="text-lg font-semibold text-slate-200 mb-3">
-															About You
-														</h3>
-														<p className="text-slate-300 leading-relaxed">
-															{insightResults.aiProfile.description}
-														</p>
-													</CardContent>
-												</Card>
-											)}
-
-										{/* Traits */}
-										<Card className="bg-slate-700 border-slate-600">
-											<CardContent className="p-6">
-												<h3 className="text-lg font-semibold text-slate-200 mb-4">
-													Your Vibe
-												</h3>
-												<div className="flex flex-wrap gap-2">
-													{insightResults.aiProfile.traits &&
-													Array.isArray(insightResults.aiProfile.traits) ? (
-														insightResults.aiProfile.traits.map(
-															(trait: string, index: number) => (
-																<span
-																	key={index}
-																	className="px-3 py-1 bg-pink-600/20 text-pink-300 rounded-full text-sm font-medium border border-pink-500/30"
-																>
-																	{trait}
-																</span>
-															)
-														)
-													) : (
-														<span className="text-slate-400">
-															No traits available
-														</span>
-													)}
-												</div>
-											</CardContent>
-										</Card>
-
-										{/* Compatibility */}
-										{insightResults.aiProfile.compatibility &&
-											typeof insightResults.aiProfile.compatibility ===
-												"string" && (
-												<Card className="bg-slate-700 border-slate-600">
-													<CardContent className="p-6">
-														<h3 className="text-lg font-semibold text-slate-200 mb-3">
-															Who You&apos;ll Vibe With
-														</h3>
-														<p className="text-slate-300 leading-relaxed">
-															{insightResults.aiProfile.compatibility}
-														</p>
-													</CardContent>
-												</Card>
-											)}
-
-										{/* Action Buttons */}
-										<div className="space-y-4 pt-4">
-											<div className="flex gap-4">
-												<Button
-													onClick={findMatches}
-													disabled={
-														loadingMatches ||
-														!connectionUserId.trim() ||
-														generatingUsername
-													}
-													className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white"
-												>
-													{loadingMatches ? (
-														<>
-															<div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-															Finding Your Tribe...
-														</>
-													) : (
-														"Find My Tribe 🤝"
-													)}
-												</Button>
-											</div>
-										</div>
-									</div>
-								) : insightResults.aiProfile ? (
-									<div className="text-center py-8">
-										<div className="bg-red-900/50 border border-red-700 rounded-lg p-6">
-											<h3 className="text-lg font-semibold text-red-300 mb-2">
-												Error Loading Profile
-											</h3>
-											<p className="text-red-400 text-sm">
-												There was an issue generating your profile. Please try
-												again.
-											</p>
-											<pre className="text-xs text-red-500 mt-4 overflow-auto max-h-32">
-												{JSON.stringify(insightResults.aiProfile, null, 2)}
-											</pre>
-										</div>
-									</div>
-								) : (
-									<div className="text-center py-8">
-										<div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-										<p className="text-slate-400">
-											Generating your unique profile...
-										</p>
-									</div>
-								)}
-							</div>
-						</motion.div>
-					</motion.div>
-				)}
 			</motion.div>
 		</div>
 	);
