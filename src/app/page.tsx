@@ -1510,9 +1510,11 @@ const UserProfileScreen = ({
 							<div className="flex items-center justify-between mb-4">
 								<div className="flex items-center gap-3">
 									<div className="w-11 h-11 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-xl">
-										{tasteProfile?.emoji ||
+										{(
+											tasteProfile?.emoji ||
 											userProfileData?.profile?.emoji ||
-											"👤"}
+											"👤"
+										).slice(0, 2)}
 									</div>
 									<div className="text-left">
 										<h1 className="text-base md:text-lg font-bold text-slate-200">
