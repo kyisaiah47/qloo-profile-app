@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { supabase } from "@/lib/supabase";
 
+export async function POST(request: Request) {
 	try {
 		const {
 			currentUserInterests,
@@ -11,13 +12,30 @@ import { supabase } from "@/lib/supabase";
 		} = await request.json();
 
 		// Use user IDs for caching (assumes matchUserProfile has user_id)
-		const currentUserId = matchUserProfile.current_user_id || matchUserProfile.currentUserId || matchUserProfile.currentUserID || matchUserProfile.currentuserId || matchUserProfile.currentuserid || matchUserProfile.current_userid || matchUserProfile.current_user || matchUserProfile.user_id || matchUserProfile.userId || matchUserProfile.userid;
-		const matchUserId = matchUserProfile.user_id || matchUserProfile.userId || matchUserProfile.userid;
+		const currentUserId =
+			matchUserProfile.current_user_id ||
+			matchUserProfile.currentUserId ||
+			matchUserProfile.currentUserID ||
+			matchUserProfile.currentuserId ||
+			matchUserProfile.currentuserid ||
+			matchUserProfile.current_userid ||
+			matchUserProfile.current_user ||
+			matchUserProfile.user_id ||
+			matchUserProfile.userId ||
+			matchUserProfile.userid;
+		const matchUserId =
+			matchUserProfile.user_id ||
+			matchUserProfile.userId ||
+			matchUserProfile.userid;
 		if (!currentUserId || !matchUserId) {
-			return NextResponse.json({
-				success: false,
-				error: "Both user IDs are required for caching compatibility results."
-			}, { status: 400 });
+			return NextResponse.json(
+				{
+					success: false,
+					error:
+						"Both user IDs are required for caching compatibility results.",
+				},
+				{ status: 400 }
+			);
 		}
 
 		// Check for existing compatibility blurb in the DB
@@ -47,8 +65,7 @@ import { supabase } from "@/lib/supabase";
 			.map(([category, items]) => `${category}: ${items.join(", ")}`)
 			.join("\n");
 
-
-const prompt = `
+		const prompt = `
 You are a matchmaking expert. Generate a JSON object with two fields:
 1. "excerpt": A warm, engaging compatibility blurb (3-5 sentences) explaining why these two users seem like a good fit based on their shared interests and preferences. Make it conversational, highlight the most interesting shared interests, and avoid being too generic.
 2. "tags": An array of 2-4 short words or phrases ("match tags") that describe why these users are a good match (e.g., "indie film lovers", "jazz fans", "adventurous spirits"). These should be concise and suitable for display as chips below the excerpt.

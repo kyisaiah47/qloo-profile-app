@@ -1147,23 +1147,25 @@ const LoginScreen = ({
 				transition={{ duration: 0.6 }}
 				className="flex-1 flex flex-col max-w-2xl mx-auto w-full justify-center"
 			>
+				{/* Header */}
 				<motion.div
 					initial={{ opacity: 0, y: -20 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ delay: 0.2, duration: 0.6 }}
-					className="text-center mb-8"
+					className="text-center mb-6"
 				>
-					<h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+					<h1 className="text-4xl md:text-5xl font-bold mb-2 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent font-heading drop-shadow-[0_2px_12px_rgba(80,0,180,0.25)]">
 						Welcome Back
 					</h1>
-					<p className="text-lg text-slate-300 mb-2">
+					<p className="text-base md:text-lg text-slate-300 font-medium mb-1">
 						Sign in with your User ID
 					</p>
-					<p className="text-slate-400">
+					<p className="text-sm text-slate-400">
 						Continue where you left off and connect with your tribe
 					</p>
 				</motion.div>
 
+				{/* Card */}
 				<motion.div
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
@@ -1171,12 +1173,13 @@ const LoginScreen = ({
 					className="w-full"
 				>
 					<Card className="shadow-2xl border border-slate-700 bg-slate-800/90 backdrop-blur-sm">
-						<CardContent className="p-8">
+						<CardContent className="p-6 md:p-8">
 							<div className="space-y-6">
+								{/* Input Field */}
 								<div className="space-y-2">
 									<Label
 										htmlFor="login-user-id"
-										className="text-slate-300 text-base"
+										className="text-slate-300 text-sm font-medium"
 									>
 										User ID
 									</Label>
@@ -1184,31 +1187,28 @@ const LoginScreen = ({
 										id="login-user-id"
 										type="text"
 										value={loginUserId}
-										onChange={(e) => {
-											setLoginUserId(e.target.value);
-										}}
+										onChange={(e) => setLoginUserId(e.target.value)}
 										placeholder="Enter your User ID"
-										className="h-12 bg-slate-700 border-slate-600 text-slate-200 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500"
+										className="h-11 bg-slate-700 border-slate-600 text-slate-200 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500 text-sm"
 										onKeyDown={(e) => {
-											if (e.key === "Enter" && !isLoading) {
-												onLogin();
-											}
+											if (e.key === "Enter" && !isLoading) onLogin();
 										}}
 									/>
 									{loginError && (
-										<p className="text-red-400 text-sm mt-2">{loginError}</p>
+										<p className="text-red-400 text-xs mt-1">{loginError}</p>
 									)}
 								</div>
 
+								{/* Action Buttons */}
 								<div className="space-y-4">
 									<Button
 										onClick={onLogin}
 										disabled={isLoading}
-										className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white transition-all duration-300"
+										className="w-full h-11 text-sm md:text-base font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.97]"
 									>
 										{isLoading ? (
 											<>
-												<div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+												<div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
 												Signing In...
 											</>
 										) : (
@@ -1218,15 +1218,15 @@ const LoginScreen = ({
 
 									<Button
 										onClick={onBack}
-										className="w-full h-12 text-lg bg-gradient-to-r from-slate-600/80 to-slate-500/80 hover:from-slate-500 hover:to-slate-400 text-white border border-slate-400/30 hover:border-slate-300/50 shadow-lg hover:shadow-slate-500/25 transition-all duration-200"
+										className="w-full h-11 text-sm md:text-base bg-gradient-to-r from-slate-600/80 to-slate-500/80 hover:from-slate-500 hover:to-slate-400 text-white border border-slate-400/30 hover:border-slate-300/50 shadow-md hover:shadow-slate-500/25 transition-all duration-200"
 									>
-										<span className="mr-2">←</span>
-										Back to Home
+										<span className="mr-2">←</span> Back to Home
 									</Button>
 								</div>
 
+								{/* Footer */}
 								<div className="text-center pt-4 border-t border-slate-700">
-									<p className="text-sm text-slate-400">
+									<p className="text-xs text-slate-400">
 										Don&apos;t have a User ID?{" "}
 										<button
 											onClick={onBack}
@@ -1385,55 +1385,7 @@ const UserProfileScreen = ({
 
 		setLoadingTasteProfile(true);
 		try {
-			const resolvedEntities: Record<string, InsightItem[]> = {};
 			const insightMap: Record<string, InsightItem[]> = {};
-
-			// // Process Qloo API calls for current interests
-			// for (const [type, values] of Object.entries(
-			// 	userProfileData.profile.interests
-			// )) {
-			// 	if (!values || values.length === 0) continue;
-
-			// 	const typeEntities: InsightItem[] = [];
-			// 	const typeInsights: InsightItem[] = [];
-
-			// 	for (const value of values) {
-			// 		const res = await fetch("/api/qloo-search", {
-			// 			method: "POST",
-			// 			headers: { "Content-Type": "application/json" },
-			// 			body: JSON.stringify({ query: value, type }),
-			// 		});
-
-			// 		const json = await res.json();
-			// 		const entity = json.data?.results?.[0];
-			// 		if (entity) {
-			// 			typeEntities.push(entity);
-
-			// 			if (entity?.entity_id) {
-			// 				const insightRes = await fetch("/api/qloo-insights", {
-			// 					method: "POST",
-			// 					headers: { "Content-Type": "application/json" },
-			// 					body: JSON.stringify({
-			// 						entityId: entity.entity_id,
-			// 						type,
-			// 						filterType: "brand",
-			// 						take: 5,
-			// 					}),
-			// 				});
-			// 				const insights = await insightRes.json();
-			// 				const insightResults = insights?.data?.results?.entities ?? [];
-			// 				if (Array.isArray(insightResults)) {
-			// 					typeInsights.push(...insightResults);
-			// 				}
-			// 			}
-			// 		}
-			// 	}
-
-			// 	if (typeEntities.length > 0) {
-			// 		resolvedEntities[type] = typeEntities;
-			// 		insightMap[type] = typeInsights;
-			// 	}
-			// }
 
 			// Generate AI profile
 			const aiResponse = await fetch("/api/generate-profile", {
@@ -1637,7 +1589,7 @@ const UserProfileScreen = ({
 																	</div>
 																	<div>
 																		<h3 className="font-semibold text-slate-200">
-																			{match.user.name || match.user.user_id}
+																			{match.user.user_id}
 																		</h3>
 																		<p className="text-slate-400 text-sm">
 																			{match.user.ai_profile?.headline ||
