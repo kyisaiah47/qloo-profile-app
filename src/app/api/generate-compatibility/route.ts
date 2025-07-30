@@ -25,8 +25,14 @@ async function getUserIdFromUsername(input: string): Promise<string | null> {
 }
 
 // ✅ Retry logic for Gemini rate limiting
+type GeminiModel = {
+	generateContent: (
+		prompt: string
+	) => Promise<{ response: { text: () => string } }>;
+};
+
 async function generateWithRetry(
-	model: any,
+	model: GeminiModel,
 	prompt: string,
 	retries = 3,
 	delay = 1000
@@ -36,8 +42,14 @@ async function generateWithRetry(
 			const result = await model.generateContent(prompt);
 			const response = await result.response;
 			return response.text();
-		} catch (err: any) {
-			if (err?.status === 429 && i < retries - 1) {
+		} catch (err: unknown) {
+			if (
+				typeof err === "object" &&
+				err !== null &&
+				"status" in err &&
+				(err as { status?: number }).status === 429 &&
+				i < retries - 1
+			) {
 				console.warn(`Gemini 429: retrying in ${delay}ms...`);
 				await new Promise((res) => setTimeout(res, delay));
 				delay *= 2;

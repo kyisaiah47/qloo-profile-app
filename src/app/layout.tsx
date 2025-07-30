@@ -16,6 +16,9 @@ export const metadata: Metadata = {
 	title: "KindredAI - AI that finds your kind",
 	description:
 		"Connect with like-minded people who share your passions through AI-powered matching",
+	icons: {
+		icon: "/favicon.ico",
+	},
 };
 
 export default function RootLayout({
