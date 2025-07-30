@@ -82,6 +82,9 @@ const ChipInput: React.FC<ChipInputProps> = ({
 		}
 	};
 
+	// className =
+	// 	"px-6 py-2.5 text-sm md:text-base font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-lg text-white disabled:opacity-50 transition-transform transform hover:scale-105 active:scale-95";
+
 	return (
 		<div
 			className={`min-h-[42px] p-2 border rounded-md bg-slate-700 border-slate-600 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 hover:border-blue-400 transition-all duration-200 ${className}`}
@@ -94,7 +97,7 @@ const ChipInput: React.FC<ChipInputProps> = ({
 						initial={{ opacity: 0, scale: 0.8 }}
 						animate={{ opacity: 1, scale: 1 }}
 						exit={{ opacity: 0, scale: 0.8 }}
-						className="inline-flex items-center gap-1 px-2 py-1 bg-blue-600 text-blue-100 text-xs rounded-md font-medium"
+						className="inline-flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-lg text-white text-xs rounded-md font-medium"
 					>
 						<span>{value}</span>
 						<button
@@ -2092,21 +2095,21 @@ const ProfileFormScreen = ({
 								<style
 									dangerouslySetInnerHTML={{
 										__html: `
-                .scrollbar-container::-webkit-scrollbar {
-                  width: 6px;
-                }
-                .scrollbar-container::-webkit-scrollbar-track {
-                  background: rgb(30 41 59);
-                  border-radius: 3px;
-                }
-                .scrollbar-container::-webkit-scrollbar-thumb {
-                  background: rgb(71 85 105);
-                  border-radius: 3px;
-                }
-                .scrollbar-container::-webkit-scrollbar-thumb:hover {
-                  background: rgb(100 116 139);
-                }
-              `,
+				.scrollbar-container::-webkit-scrollbar {
+				  width: 6px;
+				}
+				.scrollbar-container::-webkit-scrollbar-track {
+				  background: rgb(30 41 59);
+				  border-radius: 3px;
+				}
+				.scrollbar-container::-webkit-scrollbar-thumb {
+				  background: rgb(71 85 105);
+				  border-radius: 3px;
+				}
+				.scrollbar-container::-webkit-scrollbar-thumb:hover {
+				  background: rgb(100 116 139);
+				}
+			  `,
 									}}
 								/>
 
