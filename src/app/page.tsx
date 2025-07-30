@@ -2063,23 +2063,35 @@ const ProfileFormScreen = ({
 				initial={{ opacity: 0, y: 20 }}
 				animate={{ opacity: 1, y: 0 }}
 				transition={{ duration: 0.6 }}
-				className="flex-1 flex flex-col max-w-7xl mx-auto w-full"
+				className="h-screen flex flex-col max-w-7xl mx-auto w-full animate-gradient-x px-4"
 			>
 				<motion.form
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ delay: 0.2, duration: 0.6 }}
 					onSubmit={handleSubmit}
-					className="flex-1 flex flex-col min-h-0"
+					className="flex-grow flex flex-col"
 				>
-					<Card className="shadow-xl border border-slate-700 bg-slate-800/90 backdrop-blur-sm flex-1 flex flex-col min-h-0">
+					<Card className="shadow-2xl border border-slate-700 bg-slate-800/60 backdrop-blur-md flex flex-col h-full max-h-[calc(100vh-4rem)] rounded-xl overflow-hidden">
 						<CardContent className="p-6 md:p-8 flex-1 flex flex-col min-h-0">
 							{/* Header */}
-							<div className="text-center mb-4 flex-shrink-0">
-								<h2 className="text-xl md:text-2xl font-bold text-slate-200 mb-1 font-heading tracking-wide">
+							<div className="text-center mb-6 flex flex-col items-center justify-center">
+								<div className="relative inline-block px-4 py-1.5 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-full border border-blue-600/40 backdrop-blur-sm shadow-inner mb-2 animate-fade-in">
+									<span className="text-sm md:text-base font-medium text-blue-300">
+										<a
+											href="https://www.qloo.com/"
+											target="_blank"
+											rel="noopener noreferrer"
+											className="text-sm md:text-base font-medium text-blue-300 hover:underline"
+										>
+											✨ Powered by QLOO ✨
+										</a>
+									</span>
+								</div>
+								<h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight font-heading">
 									Build Your KindredAI Profile
 								</h2>
-								<p className="text-sm text-slate-400 leading-relaxed">
+								<p className="text-sm text-slate-400 mt-1">
 									Share your interests to help us find your perfect connections.
 								</p>
 							</div>
@@ -2116,13 +2128,14 @@ const ProfileFormScreen = ({
 								{/* Quick Fill */}
 								<div className="mb-6 border-b border-slate-600 pb-6">
 									<div className="flex items-center justify-between mb-3">
-										<h3 className="text-base font-semibold text-slate-200 tracking-tight">
+										<h3 className="text-sm sm:text-base font-semibold text-slate-100 tracking-tight flex items-center gap-2">
+											<span className="text-base">⚡</span>
 											Quick Fill
 										</h3>
 										<button
 											type="button"
 											onClick={() => setShowBulkInput(!showBulkInput)}
-											className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+											className="text-xs text-blue-400 hover:text-blue-300 transition-colors underline underline-offset-2"
 										>
 											{showBulkInput ? "Hide" : "Show"} Bulk Input
 										</button>
@@ -2178,13 +2191,19 @@ const ProfileFormScreen = ({
 											initial={{ opacity: 0, y: 20 }}
 											animate={{ opacity: 1, y: 0 }}
 											transition={{ delay: 0.4 + index * 0.03, duration: 0.4 }}
-											className="space-y-2 group"
+											className="space-y-2 group bg-slate-700/40 border border-slate-600 rounded-md p-2 hover:bg-slate-700 transition"
 										>
 											<Label
 												htmlFor={type}
 												className="capitalize text-xs font-medium text-slate-300 flex items-center gap-1 group-hover:text-blue-400 transition-colors"
 											>
-												<span className="text-sm">{getTypeEmoji(type)}</span>
+												<motion.span
+													initial={{ rotate: 0 }}
+													whileHover={{ rotate: 20 }}
+													transition={{ type: "spring", stiffness: 200 }}
+												>
+													{getTypeEmoji(type)}
+												</motion.span>
 												{type.replace("_", " ")}
 											</Label>
 											<ChipInput
