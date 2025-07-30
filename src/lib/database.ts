@@ -74,7 +74,6 @@ export const saveUserProfile = async (
 	contact?: string
 ) => {
 	try {
-		console.log("Saving user profile for userId:", userId);
 		// First, save the main profile
 		const { data: profile, error: profileError } = await supabase
 			.from("user_profiles")

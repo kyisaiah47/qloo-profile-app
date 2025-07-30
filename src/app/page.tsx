@@ -258,43 +258,13 @@ export default function ProfileForm() {
 	const [bulkInput, setBulkInput] = useState("");
 	const [showBulkInput, setShowBulkInput] = useState(false);
 
-	// Debug useEffect to track insightResults changes
-	useEffect(() => {
-		console.log("=== DEBUG insightResults ===");
-		console.log("insightResults:", insightResults);
-		console.log("aiProfile:", insightResults.aiProfile);
-		console.log("aiProfile type:", typeof insightResults.aiProfile);
-		if (insightResults.aiProfile) {
-			console.log("aiProfile keys:", Object.keys(insightResults.aiProfile));
-			if (insightResults.aiProfile.traits) {
-				console.log("traits:", insightResults.aiProfile.traits);
-				console.log("traits type:", typeof insightResults.aiProfile.traits);
-				console.log(
-					"traits isArray:",
-					Array.isArray(insightResults.aiProfile.traits)
-				);
-			}
-		}
-		console.log("=== END DEBUG ===");
-	}, [insightResults]);
-
-	// Debug useEffect to track formData changes
-	useEffect(() => {
-		console.log("🔧 FormData changed:", formData);
-		console.log("🔧 ShowProfile:", showProfile);
-	}, [formData, showProfile]);
-
 	// Safe wrapper for setInsightResults to prevent error objects from being set
 	const safeSetInsightResults = (
 		data: Record<string, InsightItem[]> & { aiProfile?: AIProfile }
 	) => {
-		console.log("🔍 SAFE SET - Input data:", data);
-
 		// If setting aiProfile, validate the structure
 		if (data && data.aiProfile) {
 			const aiProfile = data.aiProfile;
-			console.log("🔍 SAFE SET - aiProfile data:", aiProfile);
-			console.log("🔍 SAFE SET - aiProfile keys:", Object.keys(aiProfile));
 
 			// Check if this looks like a database error object
 			if (
@@ -319,12 +289,10 @@ export default function ProfileForm() {
 			}
 		}
 
-		console.log("🔍 SAFE SET - Setting data:", data);
 		setInsightResults(data);
 	};
 
 	const handleChange = useCallback((type: string, values: string[]) => {
-		console.log("🔧 HandleChange called with type:", type, "values:", values);
 		setFormData((prevFormData) => ({ ...prevFormData, [type]: values }));
 	}, []);
 
@@ -695,7 +663,6 @@ Please respond with ONLY the username, nothing else.`;
 				}
 			}
 
-			console.log("user_id", userId);
 			// Update existing profile using the update endpoint
 			const updateResponse = await fetch("/api/update-user-profile", {
 				method: "POST",
@@ -710,7 +677,6 @@ Please respond with ONLY the username, nothing else.`;
 			const updateResult = await updateResponse.json();
 
 			if (updateResult.success) {
-				console.log("Profile updated successfully!", updateResult);
 				setShowProfile(false);
 			} else {
 				console.error("Failed to update profile. Full response:", updateResult);
@@ -735,8 +701,6 @@ Please respond with ONLY the username, nothing else.`;
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		console.log("🔍 FORM SUBMIT STARTED");
-		console.log("🔍 Form data:", formData);
 		setIsLoading(true);
 
 		try {
@@ -776,10 +740,6 @@ Please respond with ONLY the username, nothing else.`;
 								}),
 							});
 							const insights = await insightRes.json();
-							console.log(
-								`Qloo insights response for ${entity.entity_id}:`,
-								insights
-							);
 							const insightResults = insights?.data?.results?.entities ?? [];
 							// Ensure insightResults is an array before spreading
 							if (Array.isArray(insightResults)) {
@@ -800,8 +760,6 @@ Please respond with ONLY the username, nothing else.`;
 				}
 			}
 
-			console.log("🔍 SUBMIT - User ID:", connectionUserId);
-
 			// Save to database
 			const saveResponse = await fetch("/api/save-profile", {
 				method: "POST",
@@ -819,7 +777,6 @@ Please respond with ONLY the username, nothing else.`;
 			if (saveResult.success) {
 				setUserId(saveResult.data.userId);
 				setProfileSaved(true);
-				console.log("Profile saved successfully!", saveResult);
 
 				// Set logged-in state and load user profile data
 				setIsLoggedIn(true);
@@ -849,12 +806,7 @@ Please respond with ONLY the username, nothing else.`;
 					});
 
 					const aiResult = await aiResponse.json();
-					console.log("🔍 SUBMIT - AI Result from generate-profile:", aiResult);
 					if (aiResult.success && aiResult.data && aiResult.data.headline) {
-						console.log(
-							"🔍 SUBMIT - AI profile generated successfully:",
-							aiResult.data
-						);
 						// Navigate directly to user profile instead of showing modal
 						setShowUserProfile(true);
 					} else {
@@ -1358,11 +1310,6 @@ const UserProfileScreen = ({
 
 	useEffect(() => {
 		if (userProfileData?.profile?.interests && !interestsLoadedRef.current) {
-			console.log(
-				"Loading user interests into formData:",
-				userProfileData.profile.interests
-			);
-
 			// Handle malformed interests data where categories might be undefined
 			const cleanedInterests: Record<string, string[]> = {};
 
@@ -1380,10 +1327,6 @@ const UserProfileScreen = ({
 				}
 			);
 
-			console.log(
-				"Updating formData with cleaned interests:",
-				cleanedInterests
-			);
 			// We need to call handleChange for each type to properly update the parent state
 			Object.entries(cleanedInterests).forEach(([type, values]) => {
 				handleChange(type, values);
@@ -1405,18 +1348,13 @@ const UserProfileScreen = ({
 
 	// Handle profile update within UserProfileScreen
 	const handleProfileUpdate = async () => {
-		console.log("🔄 handleProfileUpdate called");
 		try {
-			console.log("🔄 Calling handleUpdateProfile...");
 			await handleUpdateProfile();
-			console.log("✅ handleUpdateProfile completed successfully");
 
 			// After successful update, switch to profile tab and regenerate taste profile
-			console.log("🔄 Switching to profile tab...");
 			setActiveTab("profile");
 
 			// Fetch fresh user profile data and then generate taste profile
-			console.log("🔄 Fetching fresh user profile data...");
 			if (userId) {
 				try {
 					const response = await fetch("/api/get-user-profile", {
@@ -1426,12 +1364,10 @@ const UserProfileScreen = ({
 					});
 					const result = await response.json();
 					if (result.success && result.data) {
-						console.log("✅ Fresh user profile data received:", result.data);
 						// Update state with fresh data
 						setUserProfileData(result.data);
 
 						// Now generate taste profile with fresh interests
-						console.log("🔄 Calling generateTasteProfile with fresh data...");
 						setTimeout(() => {
 							generateTasteProfile();
 						}, 100);
@@ -1447,70 +1383,61 @@ const UserProfileScreen = ({
 
 	// Generate taste profile function
 	const generateTasteProfile = useCallback(async () => {
-		console.log("🔍 generateTasteProfile called");
-		console.log("🔍 userProfileData:", userProfileData);
-		console.log(
-			"🔍 userProfileData.profile.interests:",
-			userProfileData?.profile?.interests
-		);
-
 		if (!userProfileData?.profile?.interests) {
-			console.log("❌ No interests found for profile generation");
 			return;
 		}
 
-		console.log("✅ Starting taste profile generation");
 		setLoadingTasteProfile(true);
 		try {
 			const resolvedEntities: Record<string, InsightItem[]> = {};
 			const insightMap: Record<string, InsightItem[]> = {};
 
-			// Process Qloo API calls for current interests
-			for (const [type, values] of Object.entries(
-				userProfileData.profile.interests
-			)) {
-				if (!values || values.length === 0) continue;
+			// // Process Qloo API calls for current interests
+			// for (const [type, values] of Object.entries(
+			// 	userProfileData.profile.interests
+			// )) {
+			// 	if (!values || values.length === 0) continue;
 
-				const typeEntities: InsightItem[] = [];
-				const typeInsights: InsightItem[] = [];
+			// 	const typeEntities: InsightItem[] = [];
+			// 	const typeInsights: InsightItem[] = [];
 
-				for (const value of values) {
-					const res = await fetch("/api/qloo-search", {
-						method: "POST",
-						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({ query: value, type }),
-					});
+			// 	for (const value of values) {
+			// 		const res = await fetch("/api/qloo-search", {
+			// 			method: "POST",
+			// 			headers: { "Content-Type": "application/json" },
+			// 			body: JSON.stringify({ query: value, type }),
+			// 		});
 
-					const json = await res.json();
-					const entity = json.data?.results?.[0];
-					if (entity) {
-						typeEntities.push(entity);
+			// 		const json = await res.json();
+			// 		const entity = json.data?.results?.[0];
+			// 		if (entity) {
+			// 			typeEntities.push(entity);
 
-						if (entity?.entity_id) {
-							const insightRes = await fetch("/api/qloo-insights", {
-								method: "POST",
-								headers: { "Content-Type": "application/json" },
-								body: JSON.stringify({
-									entityId: entity.entity_id,
-									type,
-									filterType: "brand",
-									take: 5,
-								}),
-							});
-							const insights = await insightRes.json();
-							const insightResults = insights?.data?.results?.entities ?? [];
-							if (Array.isArray(insightResults)) {
-								typeInsights.push(...insightResults);
-							}
-						}
-					}
-				}
+			// 			if (entity?.entity_id) {
+			// 				const insightRes = await fetch("/api/qloo-insights", {
+			// 					method: "POST",
+			// 					headers: { "Content-Type": "application/json" },
+			// 					body: JSON.stringify({
+			// 						entityId: entity.entity_id,
+			// 						type,
+			// 						filterType: "brand",
+			// 						take: 5,
+			// 					}),
+			// 				});
+			// 				const insights = await insightRes.json();
+			// 				const insightResults = insights?.data?.results?.entities ?? [];
+			// 				if (Array.isArray(insightResults)) {
+			// 					typeInsights.push(...insightResults);
+			// 				}
+			// 			}
+			// 		}
+			// 	}
 
-				if (typeEntities.length > 0) {
-					resolvedEntities[type] = typeEntities;
-					insightMap[type] = typeInsights;
-				}
-			}
+			// 	if (typeEntities.length > 0) {
+			// 		resolvedEntities[type] = typeEntities;
+			// 		insightMap[type] = typeInsights;
+			// 	}
+			// }
 
 			// Generate AI profile
 			const aiResponse = await fetch("/api/generate-profile", {

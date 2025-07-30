@@ -36,7 +36,6 @@ export default function ProfileForm() {
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
-		console.log("Submitted:", formData);
 		// later: send to Qloo lookup endpoint
 	};
 

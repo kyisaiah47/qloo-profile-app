@@ -21,10 +21,6 @@ export async function POST(req: NextRequest) {
 	try {
 		const res = await fetch(url, { headers });
 		const data = await res.json();
-		console.log(
-			`Qloo search API response for "${query}" (${type}):`,
-			JSON.stringify(data, null, 2)
-		);
 		return NextResponse.json({ data });
 	} catch (err) {
 		console.error("Qloo search API error:", err);

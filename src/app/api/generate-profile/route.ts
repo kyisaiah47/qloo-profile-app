@@ -5,10 +5,8 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 export async function POST(request: NextRequest) {
-	console.log("🚀 /api/generate-profile route called");
 	try {
 		const body = await request.json();
-		console.log("📝 Request body:", JSON.stringify(body, null, 2));
 
 		const {
 			interests,
