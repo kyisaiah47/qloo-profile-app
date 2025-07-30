@@ -1004,17 +1004,27 @@ const WelcomeScreen = ({
 					initial={{ opacity: 0, y: -20 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ delay: 0.2, duration: 0.6 }}
-					className="text-center mb-12"
+					className="text-center mt-6 mb-6 px-4"
 				>
-					<h1 className="text-6xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent font-heading">
+					{/* Badge */}
+					<p className="inline-block px-3 py-1 mb-3 text-xs font-medium text-pink-300 border border-pink-400 rounded-full">
+						Social Discovery Reimagined
+					</p>
+
+					{/* Main Heading */}
+					<h1 className="text-5xl md:text-6xl font-bold mb-2 bg-gradient-to-r from-purple-500 via-pink-400 to-orange-300 bg-clip-text text-transparent font-heading drop-shadow-[0_2px_12px_rgba(80,0,180,0.25)]">
 						KindredAI
 					</h1>
-					<p className="text-xl md:text-2xl text-slate-300 mb-4 font-light font-sans">
+
+					{/* Subheadline */}
+					<p className="text-xl md:text-2xl text-slate-200 mb-1 font-medium tracking-wide font-sans">
 						AI that finds your kind
 					</p>
-					<p className="text-lg text-slate-400 max-w-2xl mx-auto font-sans">
-						Connect with like-minded people who share your passions, discover
-						new communities, and build meaningful friendships.
+
+					{/* Description */}
+					<p className="text-sm md:text-base text-slate-400 max-w-xl mx-auto font-sans leading-relaxed">
+						Connect with people who share your passions. Discover communities
+						and build real friendships.
 					</p>
 				</motion.div>
 
@@ -1022,66 +1032,53 @@ const WelcomeScreen = ({
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ delay: 0.4, duration: 0.6 }}
-					className="flex-1 max-w-3xl mx-auto w-full"
+					className="max-w-3xl mx-auto w-full"
 				>
 					<Card className="shadow-2xl border border-slate-700 bg-slate-800/90 backdrop-blur-sm">
-						<CardContent className="p-10">
-							<div className="grid md:grid-cols-3 gap-8 mb-10">
-								<motion.div
-									initial={{ opacity: 0, y: 20 }}
-									animate={{ opacity: 1, y: 0 }}
-									transition={{ delay: 0.6, duration: 0.5 }}
-									className="text-center group"
-								>
-									<div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-										<span className="text-2xl">🎯</span>
-									</div>
-									<h3 className="text-lg font-semibold text-slate-200 mb-2">
-										Smart Matching
-									</h3>
-									<p className="text-sm text-slate-400">
-										Our AI analyzes your interests to find people with genuine
-										compatibility
-									</p>
-								</motion.div>
-
-								<motion.div
-									initial={{ opacity: 0, y: 20 }}
-									animate={{ opacity: 1, y: 0 }}
-									transition={{ delay: 0.7, duration: 0.5 }}
-									className="text-center group"
-								>
-									<div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-										<span className="text-2xl">🌟</span>
-									</div>
-									<h3 className="text-lg font-semibold text-slate-200 mb-2">
-										Discover Communities
-									</h3>
-									<p className="text-sm text-slate-400">
-										Join groups and events centered around your favorite topics
-										and hobbies
-									</p>
-								</motion.div>
-
-								<motion.div
-									initial={{ opacity: 0, y: 20 }}
-									animate={{ opacity: 1, y: 0 }}
-									transition={{ delay: 0.8, duration: 0.5 }}
-									className="text-center group"
-								>
-									<div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-pink-500 to-orange-500 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-										<span className="text-2xl">🤝</span>
-									</div>
-									<h3 className="text-lg font-semibold text-slate-200 mb-2">
-										Real Connections
-									</h3>
-									<p className="text-sm text-slate-400">
-										Build authentic friendships based on shared passions, not
-										superficial swipes
-									</p>
-								</motion.div>
+						<CardContent className="p-8">
+							{/* Top 3 Features */}
+							<div className="grid md:grid-cols-3 gap-6 mb-8">
+								{[
+									{
+										emoji: "🎯",
+										title: "Smart Matching",
+										desc: "Find people who truly align with your interests.",
+										colors: "from-blue-500 to-indigo-500",
+									},
+									{
+										emoji: "🌟",
+										title: "Discover Communities",
+										desc: "Join groups around topics you care about.",
+										colors: "from-purple-500 to-pink-500",
+									},
+									{
+										emoji: "🤝",
+										title: "Real Connections",
+										desc: "Build friendships that go beyond surface level.",
+										colors: "from-pink-500 to-orange-500",
+									},
+								].map((item, i) => (
+									<motion.div
+										key={i}
+										initial={{ opacity: 0, y: 20 }}
+										animate={{ opacity: 1, y: 0 }}
+										transition={{ delay: 0.6 + i * 0.1, duration: 0.5 }}
+										className="text-center group"
+									>
+										<div
+											className={`w-14 h-14 mx-auto mb-3 bg-gradient-to-r ${item.colors} rounded-full flex items-center justify-center group-hover:scale-110 transition-transform`}
+										>
+											<span className="text-xl">{item.emoji}</span>
+										</div>
+										<h3 className="text-base font-semibold text-slate-200 mb-1">
+											{item.title}
+										</h3>
+										<p className="text-xs text-slate-400">{item.desc}</p>
+									</motion.div>
+								))}
 							</div>
 
+							{/* CTA Buttons */}
 							<motion.div
 								initial={{ opacity: 0 }}
 								animate={{ opacity: 1 }}
@@ -1092,7 +1089,7 @@ const WelcomeScreen = ({
 									<Button
 										onClick={onGetStarted}
 										size="lg"
-										className="px-10 py-4 text-lg font-semibold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 transition-all duration-300 shadow-lg text-white transform hover:scale-105"
+										className="px-8 py-3 text-base font-semibold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 transition-all duration-300 shadow-lg text-white transform hover:scale-105"
 									>
 										Get Started ✨
 									</Button>
@@ -1100,7 +1097,7 @@ const WelcomeScreen = ({
 										Takes less than 2 minutes to set up your profile
 									</p>
 
-									<div className="flex items-center gap-3 my-6">
+									<div className="flex items-center gap-3 my-4">
 										<div className="flex-1 h-px bg-slate-700"></div>
 										<span className="text-sm text-slate-400">or</span>
 										<div className="flex-1 h-px bg-slate-700"></div>
@@ -1109,7 +1106,7 @@ const WelcomeScreen = ({
 									<Button
 										onClick={onLogin}
 										size="lg"
-										className="px-10 py-4 text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-2xl border border-blue-400/30 hover:border-blue-300/50 transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 hover:shadow-blue-500/25"
+										className="px-8 py-3 text-base font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-2xl border border-blue-400/30 hover:border-blue-300/50 transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 hover:shadow-blue-500/25"
 									>
 										<span className="mr-2">🔑</span>
 										Login with User ID
