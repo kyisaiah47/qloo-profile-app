@@ -1498,51 +1498,48 @@ const UserProfileScreen = ({
 				transition={{ duration: 0.6 }}
 				className="flex-1 flex flex-col max-w-4xl mx-auto w-full min-h-0"
 			>
-				{/* Header */}
-				<motion.div
-					initial={{ opacity: 0, y: -20 }}
-					animate={{ opacity: 1, y: 0 }}
-					transition={{ delay: 0.2, duration: 0.6 }}
-					className="text-center mb-8"
-				>
-					<div className="flex items-center justify-between mb-6">
-						<div className="flex items-center gap-3">
-							<div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-2xl">
-								{tasteProfile?.emoji || userProfileData?.profile?.emoji || "👤"}
-							</div>
-							<div className="text-left">
-								<h1 className="text-3xl font-bold text-slate-200">
-									{userProfileData?.profile?.name || userId}
-								</h1>
-								<p className="text-slate-400">
-									{tasteProfile?.headline || "Building your taste profile..."}
-								</p>
-							</div>
-						</div>
-						<Button
-							onClick={onLogout}
-							className="bg-gradient-to-r from-red-600/80 to-red-500/80 hover:from-red-500 hover:to-red-400 text-white border border-red-400/30 hover:border-red-300/50 shadow-lg hover:shadow-red-500/25 transition-all duration-200"
-						>
-							<span className="mr-2">👋</span>
-							Logout
-						</Button>
-					</div>
-				</motion.div>
-
-				<Card className="shadow-xl border border-slate-700 bg-slate-800/90 backdrop-blur-sm flex-1 min-h-0">
-					<CardContent className="p-8 h-full flex flex-col">
+				<Card className="shadow-xl border border-slate-700 bg-slate-800/90 backdrop-blur-sm flex-1 min-h-0 max-w-4xl mx-auto">
+					<CardContent className="p-6 md:p-8 h-full flex flex-col">
 						<motion.div
 							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ delay: 0.4, duration: 0.6 }}
 							className="flex-1 flex flex-col min-h-0"
 						>
+							{/* Header */}
+							<div className="flex items-center justify-between mb-4">
+								<div className="flex items-center gap-3">
+									<div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-xl">
+										{tasteProfile?.emoji ||
+											userProfileData?.profile?.emoji ||
+											"👤"}
+									</div>
+									<div className="text-left">
+										<h1 className="text-base md:text-lg font-bold text-slate-200">
+											{userProfileData?.profile?.name || userId}
+										</h1>
+										<p className="text-sm text-slate-400">
+											{tasteProfile?.headline ||
+												"Building your taste profile..."}
+										</p>
+									</div>
+								</div>
+								<Button
+									onClick={onLogout}
+									size="sm"
+									className="text-xs px-3 py-1.5 bg-gradient-to-r from-red-600/80 to-red-500/80 hover:from-red-500 hover:to-red-400 text-white border border-red-400/30 hover:border-red-300/50 shadow-md hover:shadow-red-500/25 transition-all duration-200"
+								>
+									<span className="mr-1">👋</span>
+									Logout
+								</Button>
+							</div>
+
+							{/* Tab Navigation */}
 							{!showMatches && (
-								/* Tab Navigation */
 								<div className="flex border-b border-slate-600 mb-6">
 									<button
 										onClick={() => setActiveTab("profile")}
-										className={`px-6 py-3 font-medium transition-colors ${
+										className={`px-4 md:px-6 py-2.5 md:py-3 font-medium transition-colors ${
 											activeTab === "profile"
 												? "text-blue-400 border-b-2 border-blue-400"
 												: "text-slate-400 hover:text-slate-200"
@@ -1552,7 +1549,7 @@ const UserProfileScreen = ({
 									</button>
 									<button
 										onClick={() => setActiveTab("interests")}
-										className={`px-6 py-3 font-medium transition-colors ${
+										className={`px-4 md:px-6 py-2.5 md:py-3 font-medium transition-colors ${
 											activeTab === "interests"
 												? "text-blue-400 border-b-2 border-blue-400"
 												: "text-slate-400 hover:text-slate-200"
@@ -1699,148 +1696,144 @@ const UserProfileScreen = ({
 										</div>
 									</>
 								) : activeTab === "profile" ? (
-									/* Profile Tab */
-									<>
-										{/* Profile Info */}
-										<div className="space-y-6 flex-1 flex flex-col min-h-0 mb-6">
-											{userProfileData?.profile?.ai_profile && (
-												<div className="p-6 rounded-lg border border-slate-600/50">
-													<h3 className="text-xl font-semibold text-slate-200 mb-3 font-heading">
-														Your Vibe
-													</h3>
-													<p className="text-slate-300 leading-relaxed">
-														{
-															JSON.parse(userProfileData.profile.ai_profile)
-																.description
-														}
-													</p>
-												</div>
-											)}
+									<div className="space-y-5 flex-1 flex flex-col min-h-0 mb-4 text-sm">
+										{userProfileData?.profile?.ai_profile && (
+											<div className="p-4 rounded-lg border border-slate-600/40 bg-slate-800/60">
+												<h3 className="text-base font-semibold text-slate-200 mb-2 font-heading">
+													Your Vibe
+												</h3>
+												<p className="text-slate-300 leading-relaxed text-sm">
+													{
+														JSON.parse(userProfileData.profile.ai_profile)
+															.description
+													}
+												</p>
+											</div>
+										)}
 
-											{/* Taste Profile Section */}
-											<div className="p-6 rounded-lg flex-1 flex flex-col">
-												<div className="flex items-center justify-between mb-4">
-													<div className="flex items-center gap-3">
-														<div className="w-6 h-6 bg-gradient-to-r from-pink-500 to-orange-500 rounded-full flex items-center justify-center">
-															<span className="text-xs">✨</span>
-														</div>
-														<h3 className="text-xl font-semibold text-slate-200 font-heading">
-															Your Taste Profile
-														</h3>
-														{loadingTasteProfile && (
-															<div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-														)}
+										{/* Taste Profile Section */}
+										<div className="p-4 rounded-lg flex-1 flex flex-col">
+											<div className="flex items-center justify-between mb-3">
+												<div className="flex items-center gap-2">
+													<div className="w-5 h-5 bg-gradient-to-r from-pink-500 to-orange-500 rounded-full flex items-center justify-center">
+														<span className="text-xs">✨</span>
 													</div>
-												</div>
-
-												<div
-													className="flex-1 overflow-y-auto pr-2 taste-profile-scroll"
-													style={{
-														scrollbarWidth: "thin",
-														scrollbarColor: "rgb(71 85 105) rgb(30 41 59)",
-													}}
-												>
-													<style
-														dangerouslySetInnerHTML={{
-															__html: `
-													.taste-profile-scroll::-webkit-scrollbar {
-														width: 6px;
-													}
-													.taste-profile-scroll::-webkit-scrollbar-track {
-														background: rgb(30 41 59);
-														border-radius: 3px;
-													}
-													.taste-profile-scroll::-webkit-scrollbar-thumb {
-														background: rgb(71 85 105);
-														border-radius: 3px;
-													}
-													.taste-profile-scroll::-webkit-scrollbar-thumb:hover {
-														background: rgb(100 116 139);
-													}
-												`,
-														}}
-													/>
-													{tasteProfile ? (
-														<div className="space-y-4">
-															{/* Headline */}
-															<div className="p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg border border-blue-500/20">
-																<h4 className="text-blue-400 font-semibold mb-2">
-																	Headline
-																</h4>
-																<p className="text-slate-200">
-																	{tasteProfile.headline}
-																</p>
-															</div>
-
-															{/* Description */}
-															<div className="p-4 bg-gradient-to-r from-green-500/10 to-teal-500/10 rounded-lg border border-green-500/20">
-																<h4 className="text-green-400 font-semibold mb-2">
-																	Description
-																</h4>
-																<p className="text-slate-200">
-																	{tasteProfile.description}
-																</p>
-															</div>
-
-															{/* Vibe */}
-															{tasteProfile.vibe && (
-																<div className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
-																	<h4 className="text-purple-400 font-semibold mb-2">
-																		Vibe
-																	</h4>
-																	<p className="text-slate-200">
-																		{tasteProfile.vibe}
-																	</p>
-																</div>
-															)}
-
-															{/* Traits */}
-															{tasteProfile.traits &&
-																Array.isArray(tasteProfile.traits) && (
-																	<div className="p-4 bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-lg border border-orange-500/20">
-																		<h4 className="text-orange-400 font-semibold mb-2">
-																			Key Traits
-																		</h4>
-																		<div className="flex flex-wrap gap-2">
-																			{tasteProfile.traits.map(
-																				(trait: string, index: number) => (
-																					<span
-																						key={index}
-																						className="px-3 py-1 bg-orange-500/20 text-orange-300 rounded-full text-sm"
-																					>
-																						{trait}
-																					</span>
-																				)
-																			)}
-																		</div>
-																	</div>
-																)}
-
-															{/* Compatibility */}
-															{tasteProfile.compatibility && (
-																<div className="p-4 bg-gradient-to-r from-indigo-500/10 to-blue-500/10 rounded-lg border border-indigo-500/20">
-																	<h4 className="text-indigo-400 font-semibold mb-2">
-																		Compatibility
-																	</h4>
-																	<p className="text-slate-200">
-																		{tasteProfile.compatibility}
-																	</p>
-																</div>
-															)}
-														</div>
-													) : (
-														<div className="text-center py-8">
-															<p className="text-slate-400 mb-4">
-																{loadingTasteProfile
-																	? "Generating your taste profile..."
-																	: "Your taste profile will appear here once generated"}
-															</p>
-														</div>
+													<h3 className="text-base font-semibold text-slate-200 font-heading">
+														Your Taste Profile
+													</h3>
+													{loadingTasteProfile && (
+														<div className="animate-spin w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full"></div>
 													)}
 												</div>
 											</div>
+
+											<div
+												className="flex-1 overflow-y-auto pr-1 taste-profile-scroll"
+												style={{
+													scrollbarWidth: "thin",
+													scrollbarColor: "rgb(71 85 105) rgb(30 41 59)",
+												}}
+											>
+												<style
+													dangerouslySetInnerHTML={{
+														__html: `
+          .taste-profile-scroll::-webkit-scrollbar {
+            width: 5px;
+          }
+          .taste-profile-scroll::-webkit-scrollbar-track {
+            background: rgb(30 41 59);
+            border-radius: 3px;
+          }
+          .taste-profile-scroll::-webkit-scrollbar-thumb {
+            background: rgb(71 85 105);
+            border-radius: 3px;
+          }
+          .taste-profile-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgb(100 116 139);
+          }
+        `,
+													}}
+												/>
+												{tasteProfile ? (
+													<div className="space-y-3 text-sm">
+														{/* Headline */}
+														<div className="p-3 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg border border-blue-500/20">
+															<h4 className="text-blue-400 font-semibold mb-1">
+																Headline
+															</h4>
+															<p className="text-slate-200 text-sm">
+																{tasteProfile.headline}
+															</p>
+														</div>
+
+														{/* Description */}
+														<div className="p-3 bg-gradient-to-r from-green-500/10 to-teal-500/10 rounded-lg border border-green-500/20">
+															<h4 className="text-green-400 font-semibold mb-1">
+																Description
+															</h4>
+															<p className="text-slate-200 text-sm">
+																{tasteProfile.description}
+															</p>
+														</div>
+
+														{/* Vibe */}
+														{tasteProfile.vibe && (
+															<div className="p-3 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
+																<h4 className="text-purple-400 font-semibold mb-1">
+																	Vibe
+																</h4>
+																<p className="text-slate-200 text-sm">
+																	{tasteProfile.vibe}
+																</p>
+															</div>
+														)}
+
+														{/* Traits */}
+														{tasteProfile.traits &&
+															Array.isArray(tasteProfile.traits) && (
+																<div className="p-3 bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-lg border border-orange-500/20">
+																	<h4 className="text-orange-400 font-semibold mb-1">
+																		Key Traits
+																	</h4>
+																	<div className="flex flex-wrap gap-2">
+																		{tasteProfile.traits.map(
+																			(trait: string, index: number) => (
+																				<span
+																					key={index}
+																					className="px-2 py-0.5 bg-orange-500/20 text-orange-300 rounded-full text-xs"
+																				>
+																					{trait}
+																				</span>
+																			)
+																		)}
+																	</div>
+																</div>
+															)}
+
+														{/* Compatibility */}
+														{tasteProfile.compatibility && (
+															<div className="p-3 bg-gradient-to-r from-indigo-500/10 to-blue-500/10 rounded-lg border border-indigo-500/20">
+																<h4 className="text-indigo-400 font-semibold mb-1">
+																	Compatibility
+																</h4>
+																<p className="text-slate-200 text-sm">
+																	{tasteProfile.compatibility}
+																</p>
+															</div>
+														)}
+													</div>
+												) : (
+													<div className="text-center py-6">
+														<p className="text-slate-400 text-sm">
+															{loadingTasteProfile
+																? "Generating your taste profile..."
+																: "Your taste profile will appear here once generated"}
+														</p>
+													</div>
+												)}
+											</div>
 										</div>
-									</>
+									</div>
 								) : (
 									/* Interests Tab */
 									<div className="space-y-6">
@@ -1936,34 +1929,30 @@ const UserProfileScreen = ({
 								)}
 							</div>
 
-							{/* Fixed Action Buttons */}
 							<div className="flex gap-4 pt-4 border-t border-slate-700 flex-shrink-0">
 								{showMatches ? (
 									<Button
 										onClick={() => setShowMatches(false)}
-										className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-lg font-semibold text-white"
+										className="flex items-center justify-center gap-2 h-10 px-4 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 border border-blue-500/50 rounded-lg shadow-md hover:shadow-blue-500/30 transition-all duration-200"
 									>
-										<span className="mr-2">←</span>
+										<span className="text-base">←</span>
 										Go to Profile
 									</Button>
 								) : activeTab === "interests" ? (
 									<Button
 										onClick={handleProfileUpdate}
 										disabled={isLoading}
-										className="flex-1 h-16 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-xl font-bold text-white shadow-2xl border-2 border-blue-400/50 hover:border-blue-300/70 transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 hover:shadow-blue-500/25"
+										className="flex items-center justify-center gap-2 h-10 px-4 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 border border-blue-500/50 rounded-lg shadow-md hover:shadow-blue-500/30 transition-all duration-200"
 									>
 										{isLoading ? (
 											<>
-												<div className="animate-spin w-6 h-6 border-3 border-white border-t-transparent rounded-full mr-3"></div>
-												<span className="text-xl">Updating Profile...</span>
+												<div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+												Updating...
 											</>
 										) : (
 											<>
-												<span className="text-2xl mr-3">🔄</span>
-												<span className="bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent font-heading">
-													Update Profile
-												</span>
-												<span className="text-2xl ml-3">✨</span>
+												<span className="text-base">🔁</span>
+												Update Profile
 											</>
 										)}
 									</Button>
@@ -1971,22 +1960,17 @@ const UserProfileScreen = ({
 									<Button
 										onClick={handleFindMatches}
 										disabled={loadingMatches}
-										className="flex-1 h-16 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 text-xl font-bold text-white shadow-2xl border-2 border-blue-400/50 hover:border-blue-300/70 transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 hover:shadow-blue-500/25"
+										className="flex items-center justify-center gap-2 h-10 px-4 text-sm font-medium text-white bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 border border-purple-500/50 rounded-lg shadow-md hover:shadow-purple-500/30 transition-all duration-200"
 									>
 										{loadingMatches ? (
 											<>
-												<div className="animate-spin w-6 h-6 border-3 border-white border-t-transparent rounded-full mr-3"></div>
-												<span className="text-xl">
-													Finding Your Perfect Matches...
-												</span>
+												<div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+												Matching...
 											</>
 										) : (
 											<>
-												<span className="text-2xl mr-3">🤝</span>
-												<span className="bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent font-heading">
-													Find Your Tribe
-												</span>
-												<span className="text-2xl ml-3">✨</span>
+												<span className="text-base">✨</span>
+												Find Your Tribe
 											</>
 										)}
 									</Button>
