@@ -354,14 +354,13 @@ export default function ProfileForm() {
 				matches.map(async (match: Match) => {
 					try {
 						const compatibilityResponse = await fetch(
-							"/api/generate-match-explanation",
+							"/api/generate-compatibility",
 							{
 								method: "POST",
 								headers: {
 									"Content-Type": "application/json",
 								},
 								body: JSON.stringify({
-									currentUserProfile: userProfileData,
 									currentUserInterests: formData,
 									matchUserProfile: match.user,
 									sharedEntities: match.sharedEntities,
