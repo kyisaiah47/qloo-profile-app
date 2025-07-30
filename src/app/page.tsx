@@ -1496,9 +1496,9 @@ const UserProfileScreen = ({
 				initial={{ opacity: 0, y: 20 }}
 				animate={{ opacity: 1, y: 0 }}
 				transition={{ duration: 0.6 }}
-				className="flex-1 flex flex-col max-w-4xl mx-auto w-full min-h-0"
+				className="flex-1 flex flex-col max-w-5xl mx-auto w-full min-h-0"
 			>
-				<Card className="shadow-xl border border-slate-700 bg-slate-800/90 backdrop-blur-sm flex-1 min-h-0 max-w-4xl mx-auto">
+				<Card className="shadow-xl border border-slate-700 bg-slate-800/90 backdrop-blur-sm flex-1 min-h-0 w-full">
 					<CardContent className="p-6 md:p-8 h-full flex flex-col">
 						<motion.div
 							initial={{ opacity: 0, y: 20 }}
@@ -1509,7 +1509,7 @@ const UserProfileScreen = ({
 							{/* Header */}
 							<div className="flex items-center justify-between mb-4">
 								<div className="flex items-center gap-3">
-									<div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-xl">
+									<div className="w-11 h-11 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-xl">
 										{tasteProfile?.emoji ||
 											userProfileData?.profile?.emoji ||
 											"👤"}
@@ -1929,52 +1929,56 @@ const UserProfileScreen = ({
 								)}
 							</div>
 
-							<div className="flex gap-4 pt-4 border-t border-slate-700 flex-shrink-0">
-								{showMatches ? (
-									<Button
-										onClick={() => setShowMatches(false)}
-										className="flex items-center justify-center gap-2 h-10 px-4 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 border border-blue-500/50 rounded-lg shadow-md hover:shadow-blue-500/30 transition-all duration-200"
-									>
-										<span className="text-base">←</span>
-										Go to Profile
-									</Button>
-								) : activeTab === "interests" ? (
-									<Button
-										onClick={handleProfileUpdate}
-										disabled={isLoading}
-										className="flex items-center justify-center gap-2 h-10 px-4 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 border border-blue-500/50 rounded-lg shadow-md hover:shadow-blue-500/30 transition-all duration-200"
-									>
-										{isLoading ? (
-											<>
-												<div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
-												Updating...
-											</>
-										) : (
-											<>
-												<span className="text-base">🔁</span>
-												Update Profile
-											</>
-										)}
-									</Button>
-								) : (
-									<Button
-										onClick={handleFindMatches}
-										disabled={loadingMatches}
-										className="flex items-center justify-center gap-2 h-10 px-4 text-sm font-medium text-white bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 border border-purple-500/50 rounded-lg shadow-md hover:shadow-purple-500/30 transition-all duration-200"
-									>
-										{loadingMatches ? (
-											<>
-												<div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
-												Matching...
-											</>
-										) : (
-											<>
-												<span className="text-base">✨</span>
-												Find Your Tribe
-											</>
-										)}
-									</Button>
-								)}
+							<div className="pt-6 border-t border-slate-700 flex-shrink-0">
+								<Button
+									onClick={
+										showMatches
+											? () => setShowMatches(false)
+											: activeTab === "interests"
+											? handleProfileUpdate
+											: handleFindMatches
+									}
+									disabled={
+										(activeTab === "interests" && isLoading) ||
+										(!showMatches &&
+											activeTab !== "interests" &&
+											loadingMatches)
+									}
+									className={`w-full flex items-center justify-center gap-2 h-12 text-base font-medium text-white 
+      ${
+				showMatches || activeTab === "interests"
+					? "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 border border-blue-500/50 shadow-md hover:shadow-blue-500/30"
+					: "bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 border border-purple-500/50 shadow-md hover:shadow-purple-500/30"
+			}
+      rounded-xl transition-all duration-200`}
+								>
+									{(activeTab === "interests" && isLoading) ||
+									(!showMatches &&
+										activeTab !== "interests" &&
+										loadingMatches) ? (
+										<>
+											<div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+											{activeTab === "interests"
+												? "Updating..."
+												: "Matching..."}
+										</>
+									) : showMatches ? (
+										<>
+											<span className="text-base">←</span>
+											Go to Profile
+										</>
+									) : activeTab === "interests" ? (
+										<>
+											<span className="text-base">🔁</span>
+											Update Profile
+										</>
+									) : (
+										<>
+											<span className="text-base">✨</span>
+											Find Your Tribe
+										</>
+									)}
+								</Button>
 							</div>
 						</motion.div>
 					</CardContent>
