@@ -13,7 +13,7 @@ async function getUserIdFromUsername(input: string): Promise<string | null> {
 	const { data, error } = await supabase
 		.from("user_profiles") // 🔁 Change if your user table is different
 		.select("id") // 🔁 Adjust if UUID field is named something else
-		.eq("username", input)
+		.eq("user_id", input)
 		.maybeSingle();
 
 	if (error) {

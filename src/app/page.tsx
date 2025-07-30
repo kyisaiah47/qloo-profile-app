@@ -1579,7 +1579,7 @@ const UserProfileScreen = ({
 										<div className="flex-1 overflow-y-auto pr-2 mb-6">
 											{matches.length > 0 ? (
 												<div className="space-y-4">
-													{matches.slice(0, 2).map((match, index) => (
+													{matches.map((match, index) => (
 														<div
 															key={index}
 															className="p-6 rounded-lg border border-slate-600/50 hover:border-slate-500 transition-all duration-200"
