@@ -2,6 +2,54 @@ import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { supabase } from "@/lib/supabase";
 
+// ✅ Helper to resolve string usernames or IDs into UUIDs
+async function getUserIdFromUsername(input: string): Promise<string | null> {
+	const isUuid =
+		/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+			input
+		);
+	if (isUuid) return input;
+
+	const { data, error } = await supabase
+		.from("user_profiles") // 🔁 Change if your user table is different
+		.select("id") // 🔁 Adjust if UUID field is named something else
+		.eq("username", input)
+		.maybeSingle();
+
+	if (error) {
+		console.error("UUID lookup failed:", error);
+		return null;
+	}
+
+	return data?.id ?? null;
+}
+
+// ✅ Retry logic for Gemini rate limiting
+async function generateWithRetry(
+	model: any,
+	prompt: string,
+	retries = 3,
+	delay = 1000
+): Promise<string> {
+	for (let i = 0; i < retries; i++) {
+		try {
+			const result = await model.generateContent(prompt);
+			const response = await result.response;
+			return response.text();
+		} catch (err: any) {
+			if (err?.status === 429 && i < retries - 1) {
+				console.warn(`Gemini 429: retrying in ${delay}ms...`);
+				await new Promise((res) => setTimeout(res, delay));
+				delay *= 2;
+			} else {
+				console.error("Gemini API Error:", err);
+				throw err;
+			}
+		}
+	}
+	throw new Error("Gemini failed after maximum retries");
+}
+
 export async function POST(request: Request) {
 	try {
 		const {
@@ -11,8 +59,8 @@ export async function POST(request: Request) {
 			matchScore,
 		} = await request.json();
 
-		// Use user IDs for caching (assumes matchUserProfile has user_id)
-		const currentUserId =
+		// 🔍 Extract and resolve user UUIDs
+		const rawCurrentUserId =
 			matchUserProfile.current_user_id ||
 			matchUserProfile.currentUserId ||
 			matchUserProfile.currentUserID ||
@@ -23,22 +71,26 @@ export async function POST(request: Request) {
 			matchUserProfile.user_id ||
 			matchUserProfile.userId ||
 			matchUserProfile.userid;
-		const matchUserId =
+
+		const rawMatchUserId =
 			matchUserProfile.user_id ||
 			matchUserProfile.userId ||
 			matchUserProfile.userid;
+
+		const currentUserId = await getUserIdFromUsername(rawCurrentUserId);
+		const matchUserId = await getUserIdFromUsername(rawMatchUserId);
+
 		if (!currentUserId || !matchUserId) {
 			return NextResponse.json(
 				{
 					success: false,
-					error:
-						"Both user IDs are required for caching compatibility results.",
+					error: "Could not resolve both user IDs to UUIDs.",
 				},
 				{ status: 400 }
 			);
 		}
 
-		// Check for existing compatibility blurb in the DB
+		// 🔁 Cache check
 		const { data: cached, error: cacheError } = await supabase
 			.from("user_match_compatibility")
 			.select("blurb")
@@ -49,7 +101,7 @@ export async function POST(request: Request) {
 		if (cacheError) {
 			console.error("Error checking compatibility cache:", cacheError);
 		}
-		if (cached && cached.blurb) {
+		if (cached?.blurb) {
 			return NextResponse.json({
 				success: true,
 				data: cached.blurb,
@@ -57,7 +109,7 @@ export async function POST(request: Request) {
 			});
 		}
 
-		// ...existing code to generate prompt...
+		// 🧠 Generate prompt
 		console.log("Generating compatibility explanation...");
 		const sharedInterestsText = Object.entries(
 			sharedEntities as Record<string, string[]>
@@ -68,7 +120,7 @@ export async function POST(request: Request) {
 		const prompt = `
 You are a matchmaking expert. Generate a JSON object with two fields:
 1. "excerpt": A warm, engaging compatibility blurb (3-5 sentences) explaining why these two users seem like a good fit based on their shared interests and preferences. Make it conversational, highlight the most interesting shared interests, and avoid being too generic.
-2. "tags": An array of 2-4 short words or phrases ("match tags") that describe why these users are a good match (e.g., "indie film lovers", "jazz fans", "adventurous spirits"). These should be concise and suitable for display as chips below the excerpt.
+2. "tags": An array of 2-4 short words or phrases ("match tags") that describe why these users are a good match (e.g., "indie film lovers", "jazz fans", "adventurous spirits").
 
 CURRENT USER'S INTERESTS:
 ${Object.entries(currentUserInterests)
@@ -87,24 +139,14 @@ SHARED INTERESTS:
 ${sharedInterestsText}
 
 MATCH SCORE: ${(matchScore * 100).toFixed(0)}%
-
-Write the excerpt in 3-5 sentences. Then, provide the tags as a JSON array. Example response:
-{
-  "excerpt": "You both have incredible taste in indie films and share a love for jazz fusion. Sarah seems like someone who'd appreciate your passion for underground cinema and could introduce you to some amazing new artists from the Brooklyn scene. Your adventurous spirits and appreciation for unique experiences make you a great match. You both value creativity and are always seeking something new. This connection promises exciting discoveries and meaningful conversations.",
-  "tags": ["indie film lovers", "jazz fans", "adventurous spirits", "creative minds"]
-}
 `;
 
-		console.log(prompt);
-
-		// Gemini AI call (GoogleGenerativeAI)
+		// 🔮 Gemini API call with retry
 		const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 		const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-		const result = await model.generateContent(prompt);
-		const geminiResponse = await result.response;
-		const text = geminiResponse.text();
+		const text = await generateWithRetry(model, prompt);
 
-		// Parse the Gemini response as JSON
+		// 🧩 Parse Gemini response
 		let excerpt = "";
 		let tags: string[] = [];
 		try {
@@ -126,7 +168,7 @@ Write the excerpt in 3-5 sentences. Then, provide the tags as a JSON array. Exam
 			throw new Error("No compatibility excerpt generated");
 		}
 
-		// Save the result in the DB for future requests
+		// 💾 Save to cache
 		const { error: insertError } = await supabase
 			.from("user_match_compatibility")
 			.insert([
@@ -138,6 +180,7 @@ Write the excerpt in 3-5 sentences. Then, provide the tags as a JSON array. Exam
 					created_at: new Date().toISOString(),
 				},
 			]);
+
 		if (insertError) {
 			console.error("Error saving compatibility blurb:", insertError);
 		}
