@@ -96,18 +96,10 @@ Generate a JSON response with these fields:
   "vibe": "One distinctive word that captures THEIR unique aesthetic (avoid common words like 'eclectic' - be more specific)",
   "traits": ["4-5 specific personality traits that someone with THESE EXACT interests would have"],
   "compatibility": "Who would connect with someone who has THIS SPECIFIC combination of interests",
-  "emoji": "An emoji that represents THEIR unique combination, not just one category"
+  "emoji": "A single emoji character (exactly 1) that represents THEIR unique combination, not just one category"
 }
 
 CRITICAL: Make this feel like a custom-written profile, not a template. Reference their specific taste combination.`;
-
-		console.log("🤖 About to call Gemini AI");
-		console.log("🔑 API Key exists:", !!process.env.GEMINI_API_KEY);
-		console.log(
-			"� API Key first 10 chars:",
-			process.env.GEMINI_API_KEY?.substring(0, 10)
-		);
-		console.log("�📄 Prompt length:", prompt.length);
 
 		// Validate genAI instance
 		if (!genAI) {
@@ -116,28 +108,17 @@ CRITICAL: Make this feel like a custom-written profile, not a template. Referenc
 
 		// Get AI model
 		const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-		console.log("✅ AI Model created successfully");
 
 		if (!model) {
 			throw new Error("Failed to get AI model");
 		}
 
 		// Generate content
-		console.log("⚡ Calling generateContent...");
 		const result = await model.generateContent(prompt);
-		console.log("✅ AI generation completed");
-		console.log("🔍 Result object:", result);
 
 		const response = await result.response;
-		console.log("✅ Response object received");
-		console.log("🔍 Response object:", response);
 
 		const text = response.text();
-		console.log(
-			"✅ Text extracted from response:",
-			text.substring(0, 200) + "..."
-		);
-		console.log("📄 Full text response:", text);
 
 		// Parse the response
 		let profileData;
@@ -174,6 +155,11 @@ CRITICAL: Make this feel like a custom-written profile, not a template. Referenc
 					emoji: "🌟",
 				};
 			}
+		}
+
+		// Ensure emoji is only 1 character
+		if (profileData?.emoji && profileData.emoji.length > 1) {
+			profileData.emoji = profileData.emoji[0];
 		}
 
 		return NextResponse.json({

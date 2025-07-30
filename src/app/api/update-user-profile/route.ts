@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
 
 			if (profileData) {
 				// Merge profile data (like emoji, name, etc.)
+
 				Object.assign(updateData, profileData);
 			}
 
